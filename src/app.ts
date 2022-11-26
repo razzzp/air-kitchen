@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import createError, { HttpError } from 'http-errors';
-import pug from 'pug';
+
 
 const app = express();
 const port = 3000;
@@ -15,7 +15,7 @@ app.use(express.static(path.join(process.cwd(), 'public')));
 
 app.get('/', function(req : any, res : any, next : any){
     res.send('hiiiii');
-})
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -30,7 +30,7 @@ app.use(function(err : any, req : any, res : any, next : any) {
 
     // render the error page
     res.status(err.status || 500);
-    res.render('error');
+    res.send('error', );
 });
 
 app.listen(port, () => {

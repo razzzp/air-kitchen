@@ -1,5 +1,5 @@
 import { assert } from "node:console";
-import { getDBManager, MySQLDBManager } from "../src/dal/db-manager";
+import { getDBManager, MySQLDBManager } from "../dal/mysql-db-manager";
 
 async function testConnect() {
     // const dbManager = new MySQLDBManager({
