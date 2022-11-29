@@ -6,7 +6,7 @@ export interface DBManager {
     query(q: string) : Promise<MySQLQueryResult>;
 }
 
-export interface MySQLQueryResult {
+export type MySQLQueryResult = {
     error : mysql.MysqlError,
     results : any,
     fields : mysql.FieldInfo[],

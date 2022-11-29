@@ -32,7 +32,7 @@ export class MySQLDBManager implements DBManager{
     async query(q: string) : Promise<MySQLQueryResult>{
         const conn = await this.connect();
         return new Promise((resolve, reject) => conn.query(q, (error, results, fields)=> {
-            if(error){
+            if(error) {
                 reject(error);
             } else {
                 resolve({error : null, results : results, fields : fields}); 
