@@ -17,7 +17,7 @@ export class Order extends Entity {
      *
      */
     constructor(id:string, name:string, dueDate: number, cost: number, salePrice:number, status: OrderStatus) {
-        super(id);
+        super();
         this._name = name;
         this._dueDate = dueDate;
         this._cost = cost;

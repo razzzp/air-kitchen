@@ -1,11 +1,19 @@
 export class Entity {
-    _id: string | null;
-    _creationDate: number;
+    private _id: string;
+    public get id(): string {
+        return this._id;
+    }
+
+    private _creationDate: number;
+    public get creationDate(): number {
+        return this._creationDate;
+    }
+
     /**
      *
      */
-    constructor(id: string) {
-        this._id = id;
+    constructor() {
+        this._id = null;
         this._creationDate = Date.now()
     }
 }

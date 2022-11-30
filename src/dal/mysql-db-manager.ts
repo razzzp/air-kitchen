@@ -47,6 +47,16 @@ export class MySQLDBManager implements DBManager{
         this._connection = null;
         return;
     }
+
+    /**
+     * calls escape method in connection
+     * only call when connected
+     */
+    public escapeValue(value : any) : string {
+        if(this._connection === null) throw new Error("db is not connected");
+        
+        return this._connection.escape(value);
+    }
 }
 
 let _dbManager : DBManager = null;
