@@ -1,6 +1,9 @@
 export class Entity {
-    private _id: string;
-    public get id(): string {
+    private _id: number;
+    public set id(value: number) {
+        this._id = value;
+    }
+    public get id(): number {
         return this._id;
     }
 

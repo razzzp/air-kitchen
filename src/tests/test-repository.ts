@@ -4,7 +4,7 @@ import { Repository, SQLTableDesc, SQLColumnDesc, SQLColumnMapping} from "../dal
 import { Entity } from "../entities/entity";
 
 
-class TestRepository extends Repository {
+class TestRepository extends Repository<TestEntity> {
     
 }
 
@@ -47,9 +47,17 @@ async function testRepoTableExists() {
 async function testRepoSave() {
     const tRepo = getNewTestRepo();
     const newEntity = new TestEntity();
+    let insertedEntity : TestEntity;
+    
     newEntity._testVar='test Value';
+    insertedEntity = await tRepo.save(newEntity);
+    
+    console.log(insertedEntity);
 
-    console.log(await tRepo.save(newEntity));
+    insertedEntity._testVar = 'modified values'
+    insertedEntity = await tRepo.save(insertedEntity);
+
+    console.log(insertedEntity);
 
     tRepo.disconnect();
 }

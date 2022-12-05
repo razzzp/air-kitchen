@@ -1,6 +1,6 @@
 
 import { Entity } from "../entities/entity";
-import { DBManager, MySQLQueryResult } from "./db-manager";
+import { DBManager, QueryResult } from "./db-manager";
 
 
 export interface IRepository{
@@ -30,7 +30,7 @@ export type SQLColumnMapping = {
     [varName : string] : SQLColumnDesc;
 }
 
-export abstract class Repository implements IRepository{
+export abstract class Repository <T extends Entity> implements IRepository{
     _tableDesc : SQLTableDesc;
     _columnMappings : Record<string, SQLColumnDesc>;
     _dbManager: DBManager;
@@ -85,7 +85,7 @@ export abstract class Repository implements IRepository{
      */
     public async doesTableExist() : Promise<boolean> {
         const query = `SELECT * FROM information_schema.tables WHERE table_schema = '${this._tableDesc.schema}' AND table_name = '${this._tableDesc.name}' LIMIT 1;`;
-        const result : MySQLQueryResult  = await this._getDBManager().query(query);
+        const result : QueryResult  = await this._getDBManager().query(query);
         return (result.results !== null && result.results.length > 0);
     }
 
@@ -136,7 +136,16 @@ export abstract class Repository implements IRepository{
         return result;
     }
 
-    private async _insertWithColumnValues(columnValues : Record<string, string>) : Promise<any> {
+    private _buildAssignmentList(columnValues : Record<string, string>) : string {
+        let result = '';
+        for(let entry of Object.entries(columnValues)) {
+            if(result !== '') result += ',';
+            result += `${entry[0]} = ${entry[1]}`;
+        }
+        return result;
+    }
+
+    private async _insertWithColumnValues(columnValues : Record<string, string>) : Promise<QueryResult> {
         const baseQuery = `INSERT INTO ${this.getFullTableName()} `;
         let columns = '';
         let values = '';
@@ -152,13 +161,32 @@ export abstract class Repository implements IRepository{
         return await this._getDBManager().query(finalQuery);
     }
 
-    private async _insertEntity(entity: Entity) : Promise<any> {
+    private async _insertEntity(entity: T) : Promise<T> {
         const columnValues = this._getColumnValues(entity);
-        return await this._insertWithColumnValues(columnValues);
+        const insertResponse = await this._insertWithColumnValues(columnValues);
+        if(insertResponse.error) {
+            throw new Error(insertResponse.error);
+        } else {
+            entity.id = insertResponse.results.insertId;
+            return entity;
+        } 
     }
 
-    private async _update(entity: Entity) : Promise<any> {
-        // TODO
+    private async _updateWithColumnValues(columnValues : Record<string, string>) : Promise<QueryResult> {
+        const baseQuery = `UPDATE ${this.getFullTableName()} SET `;
+        const assignmentList = this._buildAssignmentList(columnValues);
+        const finalQuery = baseQuery + `${assignmentList}`;
+        return await this._getDBManager().query(finalQuery);
+    }
+
+    private async _updateEntity(entity: T) : Promise<T> {
+        const columnValues = this._getColumnValues(entity);
+        const updateResponse = await this._updateWithColumnValues(columnValues);
+        if(updateResponse.error) {
+            throw new Error(updateResponse.error);
+        } else {
+            return entity;
+        } 
     }
 
     /**
@@ -167,10 +195,10 @@ export abstract class Repository implements IRepository{
      * @param entity object to save
      * @returns entity saved to DB, the id field will be field
      */
-    public async save(entity: Entity) : Promise<Entity> {
+    public async save(entity: T) : Promise<T> {
         await this._getDBManager().connect();
         // no id means object has not been save before
-        if(entity.id) return await this._update(entity);
+        if(entity.id) return await this._updateEntity(entity);
         else return await this._insertEntity(entity);
     }
 

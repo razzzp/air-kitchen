@@ -1,4 +1,4 @@
-import { DBManager, MySQLQueryResult } from "./db-manager";
+import { DBManager, QueryResult } from "./db-manager";
 import mysql from 'mysql';
 import dotenv from 'dotenv';
 
@@ -29,7 +29,7 @@ export class MySQLDBManager implements DBManager{
         return this._connection;
     }
 
-    async query(q: string) : Promise<MySQLQueryResult>{
+    async query(q: string) : Promise<QueryResult>{
         const conn = await this.connect();
         return new Promise((resolve, reject) => conn.query(q, (error, results, fields)=> {
             if(error) {
