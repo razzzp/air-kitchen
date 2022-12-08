@@ -1,15 +1,7 @@
 
-import { Entity } from "../entities/entity";
-import { DBManager, QueryResult } from "./db-manager";
-
-
-export interface IRepository{
-    doesTableExist() : Promise<boolean>;
-    // save(entity: Entity, cb: (err : any)=>void) : Promise<Entity>;
-    // delete(entity: Entity, cb: (err:any)=>void) : Promise<Entity>;
-    // find(criteria: Object) : Promise<Array<Entity>>;
-    // findOneBy(criteria : Object) : Promise<Entity>;
-}
+import { RootEntity } from "../entities/root-entity";
+import { IDBManager, TQueryResult } from "../dbmanagers/idb-manager";
+import { IRepository } from "./irepository";
 
 export type SQLColumnDesc = {
     name : string;
@@ -30,10 +22,10 @@ export type SQLColumnMapping = {
     [varName : string] : SQLColumnDesc;
 }
 
-export abstract class Repository <T extends Entity> implements IRepository{
+export abstract class Repository <T extends RootEntity> implements IRepository{
     _tableDesc : SQLTableDesc;
     _columnMappings : Record<string, SQLColumnDesc>;
-    _dbManager: DBManager;
+    _dbManager: IDBManager;
     _tableChecked : boolean = false;
     
     // abstract _getTableName() : string;
@@ -41,13 +33,13 @@ export abstract class Repository <T extends Entity> implements IRepository{
     /**
      *
      */
-    constructor(tableDesc: SQLTableDesc, columnMapping : SQLColumnMapping, dbManager : DBManager) {
+    constructor(tableDesc: SQLTableDesc, columnMapping : SQLColumnMapping, dbManager : IDBManager) {
         this._tableDesc = tableDesc;
         this._columnMappings = columnMapping;
         this._dbManager = dbManager;
     }
     
-    private _getDBManager(): DBManager {
+    private _getDBManager(): IDBManager {
         return this._dbManager;
     }
 
@@ -85,7 +77,7 @@ export abstract class Repository <T extends Entity> implements IRepository{
      */
     public async doesTableExist() : Promise<boolean> {
         const query = `SELECT * FROM information_schema.tables WHERE table_schema = '${this._tableDesc.schema}' AND table_name = '${this._tableDesc.name}' LIMIT 1;`;
-        const result : QueryResult  = await this._getDBManager().query(query);
+        const result : TQueryResult  = await this._getDBManager().query(query);
         return (result.results !== null && result.results.length > 0);
     }
 
@@ -126,7 +118,7 @@ export abstract class Repository <T extends Entity> implements IRepository{
     /**
      * 
      */
-    private _getColumnValues(entity: Entity) : Record<string, string>{
+    private _getColumnValues(entity: RootEntity) : Record<string, string>{
         let result : Record<string, string> = {};
         for(let keyValue of Object.entries(entity)){
             const curColumnDesc = this.getColumnDescForVarName(keyValue[0]);
@@ -145,7 +137,7 @@ export abstract class Repository <T extends Entity> implements IRepository{
         return result;
     }
 
-    private async _insertWithColumnValues(columnValues : Record<string, string>) : Promise<QueryResult> {
+    private async _insertWithColumnValues(columnValues : Record<string, string>) : Promise<TQueryResult> {
         const baseQuery = `INSERT INTO ${this.getFullTableName()} `;
         let columns = '';
         let values = '';
@@ -172,7 +164,7 @@ export abstract class Repository <T extends Entity> implements IRepository{
         } 
     }
 
-    private async _updateWithColumnValues(columnValues : Record<string, string>) : Promise<QueryResult> {
+    private async _updateWithColumnValues(columnValues : Record<string, string>) : Promise<TQueryResult> {
         const baseQuery = `UPDATE ${this.getFullTableName()} SET `;
         const assignmentList = this._buildAssignmentList(columnValues);
         const finalQuery = baseQuery + `${assignmentList}`;

@@ -1,8 +1,8 @@
-import { DBManager, QueryResult } from "./db-manager";
+import { IDBManager, TQueryResult } from "./idb-manager";
 import mysql from 'mysql';
 import dotenv from 'dotenv';
 
-export class MySQLDBManager implements DBManager{
+export class MySQLDBManager implements IDBManager{
 
     _connectionConfig : mysql.ConnectionConfig;
     _connection : mysql.Connection = null;
@@ -29,7 +29,7 @@ export class MySQLDBManager implements DBManager{
         return this._connection;
     }
 
-    async query(q: string) : Promise<QueryResult>{
+    async query(q: string) : Promise<TQueryResult>{
         const conn = await this.connect();
         return new Promise((resolve, reject) => conn.query(q, (error, results, fields)=> {
             if(error) {
@@ -55,11 +55,11 @@ export class MySQLDBManager implements DBManager{
     public escapeValue(value : any) : string {
         if(this._connection === null) throw new Error("db is not connected");
         
-        return this._connection.escape(value);
+        return mysql.escape(value);
     }
 }
 
-let _dbManager : DBManager = null;
+let _dbManager : IDBManager = null;
 
 export function getDBManager(){
     dotenv.config()

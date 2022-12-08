@@ -1,14 +1,14 @@
-import { DBManager } from "../dal/db-manager";
-import { getDBManager } from "../dal/mysql-db-manager";
-import { Repository, SQLTableDesc, SQLColumnDesc, SQLColumnMapping} from "../dal/repository";
-import { Entity } from "../entities/entity";
+import { IDBManager } from "../dbmanagers/idb-manager";
+import { getDBManager } from "../dbmanagers/mysql-db-manager";
+import { Repository, SQLTableDesc, SQLColumnDesc, SQLColumnMapping} from "../repositories/repository";
+import { RootEntity } from "../entities/root-entity";
 
 
 class TestRepository extends Repository<TestEntity> {
     
 }
 
-class TestEntity extends Entity {
+class TestEntity extends RootEntity {
     _testVar : string;
 }
 
@@ -17,7 +17,7 @@ function getNewTestRepo() : TestRepository {
     const columnDefinitions : SQLColumnMapping = {
         _id : {
             name : 'id',
-            dataType : 'INT UNSIGNED',
+            dataType : 'BIGINT UNSIGNED',
             notNull : true,
             primaryKey : true,
             autoIncrement : true,

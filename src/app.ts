@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import createError, { HttpError } from 'http-errors';
+import "reflect-metadata";
 
 
 const app = express();

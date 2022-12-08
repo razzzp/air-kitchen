@@ -1,27 +1,30 @@
-import { Entity } from "./entity";
+import { Column, Entity, PrimaryColumn } from "typeorm";
+import { IOrder } from "./ientity";
 
-export enum OrderStatus {
-    Pending,
-    InProgress,
-    Done,
-}
+@Entity()
+export class Order implements IOrder{
+    
+    @PrimaryColumn()
+    private _id: number;
+    public get id(): number {
+        return this._id;
+    }
+    public set id(value: number) {
+        this._id = value;
+    }
 
-export class Order extends Entity {
-    _name: string;
-    _dueDate: number | null;
-    _cost: number;
-    _salePrice: number;
-    _status:  OrderStatus;
+    @Column()
+    private _creationDate: Date;
+    public get creationDate(): Date {
+        return this._creationDate;
+    }
 
-    /**
-     *
-     */
-    constructor(id:string, name:string, dueDate: number, cost: number, salePrice:number, status: OrderStatus) {
-        super();
-        this._name = name;
-        this._dueDate = dueDate;
-        this._cost = cost;
-        this._salePrice = salePrice;
-        this._status = status;
+    @Column()
+    private _name: string;
+    public get name(): string {
+        return this._name;
+    }
+    public set name(value: string) {
+        this._name = value;
     }
 }
