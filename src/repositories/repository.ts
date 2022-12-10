@@ -1,7 +1,8 @@
 
-import { RootEntity } from "../entities/root-entity";
+import { RootEntity } from "../entities/typeorm-entities/root-entity";
 import { IDBManager, TQueryResult } from "../dbmanagers/idb-manager";
-import { IRepository } from "./irepository";
+import { IRepository } from "./interfaces";
+import { IEntity } from "../entities/interfaces";
 
 export type SQLColumnDesc = {
     name : string;
@@ -22,7 +23,7 @@ export type SQLColumnMapping = {
     [varName : string] : SQLColumnDesc;
 }
 
-export abstract class Repository <T extends RootEntity> implements IRepository{
+export abstract class Repository implements IRepository{
     _tableDesc : SQLTableDesc;
     _columnMappings : Record<string, SQLColumnDesc>;
     _dbManager: IDBManager;
@@ -37,6 +38,9 @@ export abstract class Repository <T extends RootEntity> implements IRepository{
         this._tableDesc = tableDesc;
         this._columnMappings = columnMapping;
         this._dbManager = dbManager;
+    }
+    destroy(): void {
+        this._dbManager.disconnect();
     }
     
     private _getDBManager(): IDBManager {
@@ -118,7 +122,7 @@ export abstract class Repository <T extends RootEntity> implements IRepository{
     /**
      * 
      */
-    private _getColumnValues(entity: RootEntity) : Record<string, string>{
+    private _getColumnValues(entity: IEntity) : Record<string, string>{
         let result : Record<string, string> = {};
         for(let keyValue of Object.entries(entity)){
             const curColumnDesc = this.getColumnDescForVarName(keyValue[0]);
@@ -153,7 +157,7 @@ export abstract class Repository <T extends RootEntity> implements IRepository{
         return await this._getDBManager().query(finalQuery);
     }
 
-    private async _insertEntity(entity: T) : Promise<T> {
+    private async _insertEntity(entity: IEntity) : Promise<IEntity> {
         const columnValues = this._getColumnValues(entity);
         const insertResponse = await this._insertWithColumnValues(columnValues);
         if(insertResponse.error) {
@@ -171,7 +175,7 @@ export abstract class Repository <T extends RootEntity> implements IRepository{
         return await this._getDBManager().query(finalQuery);
     }
 
-    private async _updateEntity(entity: T) : Promise<T> {
+    private async _updateEntity(entity: IEntity) : Promise<IEntity> {
         const columnValues = this._getColumnValues(entity);
         const updateResponse = await this._updateWithColumnValues(columnValues);
         if(updateResponse.error) {
@@ -187,7 +191,7 @@ export abstract class Repository <T extends RootEntity> implements IRepository{
      * @param entity object to save
      * @returns entity saved to DB, the id field will be field
      */
-    public async save(entity: T) : Promise<T> {
+    public async save(entity: IEntity) : Promise<IEntity> {
         await this._getDBManager().connect();
         // no id means object has not been save before
         if(entity.id) return await this._updateEntity(entity);

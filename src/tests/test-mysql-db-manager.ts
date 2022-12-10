@@ -14,4 +14,10 @@ async function testConnect() {
     console.log('connection closed.')
 }
 
-testConnect();
+testConnect()
+.then((val) => {
+    console.log('done');
+})
+.catch((val) => {
+    console.log('error');
+});

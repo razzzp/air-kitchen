@@ -1,15 +1,23 @@
 import { IDBManager } from "../dbmanagers/idb-manager";
 import { getDBManager } from "../dbmanagers/mysql-db-manager";
 import { Repository, SQLTableDesc, SQLColumnDesc, SQLColumnMapping} from "../repositories/repository";
-import { RootEntity } from "../entities/root-entity";
+import { RootEntity } from "../entities/typeorm-entities/root-entity";
+import { IEntity } from "../entities/interfaces";
 
 
-class TestRepository extends Repository<TestEntity> {
-    
+class TestRepository extends Repository {
+    /** @override */
+    public save(entity : ITestEntity) : Promise<IEntity> {
+        return super.save(entity);
+    }
 }
 
-class TestEntity extends RootEntity {
-    _testVar : string;
+interface ITestEntity extends IEntity{
+    testVar : string;
+}
+
+class TestEntity extends RootEntity implements ITestEntity {
+    testVar : string;
 }
 
 function getNewTestRepo() : TestRepository {
@@ -26,7 +34,7 @@ function getNewTestRepo() : TestRepository {
             name : 'creation_date',
             dataType : 'VARCHAR(255)',
         },
-        _testVar : {
+        testVar : {
             name : 'test_field',
             dataType : 'VARCHAR(255)',
         }
@@ -47,15 +55,15 @@ async function testRepoTableExists() {
 async function testRepoSave() {
     const tRepo = getNewTestRepo();
     const newEntity = new TestEntity();
-    let insertedEntity : TestEntity;
+    let insertedEntity : ITestEntity;
     
-    newEntity._testVar='test Value';
-    insertedEntity = await tRepo.save(newEntity);
+    newEntity.testVar='test Value';
+    insertedEntity =  (await tRepo.save(newEntity) as ITestEntity);
     
     console.log(insertedEntity);
 
-    insertedEntity._testVar = 'modified values'
-    insertedEntity = await tRepo.save(insertedEntity);
+    insertedEntity.testVar = 'modified values'
+    insertedEntity = (await tRepo.save(insertedEntity) as ITestEntity);
 
     console.log(insertedEntity);
 
@@ -67,4 +75,10 @@ async function test() {
     await testRepoSave();
 }
 
-test();
+test()
+.then((val) => {
+    console.log('done');
+})
+.catch((val) => {
+    console.log('error');
+});
