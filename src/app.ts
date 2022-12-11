@@ -1,18 +1,31 @@
-import express, { NextFunction } from 'express';
-import dotenv from 'dotenv';
-import path from 'path';
-import cookieParser from 'cookie-parser';
-import createError, { HttpError } from 'http-errors';
+import Express from 'express';
+import Path from 'path';
+import CookieParser from 'cookie-parser';
+import createError from 'http-errors';
 import "reflect-metadata";
+import { orderRouter } from './routes/api-v1/order-router';
+import { initializeDataSource } from './repositories/data-sources';
 
 
-const app = express();
+const app = Express();
 const port = 3000;
 
-// middle wares
-app.use(cookieParser());
-app.use(express.static(path.join(process.cwd(), 'public')));
+// initialize data source/connect to DB
+initializeDataSource()
+.then((dataSource)=>{
+    console.log(`⚡[database]: Successfully connected to data source.`);
+})
+.catch(err => {
+    throw err;
+});
 
+// middle wares
+app.use(CookieParser());
+app.use(Express.static(Path.join(process.cwd(), 'public')));
+
+// routes
+//  orders
+app.use('/api/v1', orderRouter);
 
 app.get('/', function(req : any, res : any, next : any){
     res.send('hiiiii');

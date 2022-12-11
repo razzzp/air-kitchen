@@ -3,6 +3,7 @@ import { IEntity, IOrder } from "../entities/interfaces";
 export interface IRepository {
     doesTableExist() : Promise<boolean>;
     save(entity: IEntity) : Promise<IEntity>;
+    find() : Promise<Array<IEntity>>;
     destroy() : void;
     // delete(entity: IEntity) : Promise<IEntity>;
     // findBy(criteria: Object) : Promise<Array<IEntity>>;
@@ -12,4 +13,6 @@ export interface IRepository {
 export interface IOrderRepository extends IRepository{
     /** @override */
     save(entity : IOrder) : Promise<IOrder>;
+    /** @override */
+    find() : Promise<Array<IOrder>>;
 }
