@@ -6,7 +6,7 @@ export const orderRouter = express.Router();
 
 orderRouter.route('/orders')
     .get(OrderController.retrieveOrders)
-    .post();
+    .post(OrderController.createOrder);
 
 orderRouter.route('/orders/:id')
     .get()

@@ -1,13 +1,13 @@
 import { DataSource } from "typeorm";
-import { Order } from "../entities/typeorm-entities/order";
+import { Order } from "../../entities/typeorm-entities/order";
 import  dotenv  from "dotenv";
-import { User } from "../entities/typeorm-entities/user";
+import { User } from "../../entities/typeorm-entities/user";
 
 
 let _dataSource : DataSource = null;
 
 /**
- * Use only once initializeDataSourcer() has been called
+ * Use only once initializeDataSource() has been called
  * @returns initialized data source
  */
 export function getMySQLDataSource() : DataSource {

@@ -4,7 +4,7 @@ import CookieParser from 'cookie-parser';
 import createError from 'http-errors';
 import "reflect-metadata";
 import { orderRouter } from './routes/api-v1/order-router';
-import { initializeDataSource } from './repositories/data-sources';
+import { initializeDataSource } from './repositories/typeorm-repositories/data-sources';
 
 
 const app = Express();
@@ -20,6 +20,8 @@ initializeDataSource()
 });
 
 // middle wares
+app.use(Express.urlencoded({ extended: false }));
+app.use(Express.json());
 app.use(CookieParser());
 app.use(Express.static(Path.join(process.cwd(), 'public')));
 
@@ -44,7 +46,7 @@ app.use(function(err : any, req : any, res : any, next : any) {
 
     // render the error page
     res.status(err.status || 500);
-    res.send('error', );
+    res.send(`${err}`, );
 });
 
 app.listen(port, () => {

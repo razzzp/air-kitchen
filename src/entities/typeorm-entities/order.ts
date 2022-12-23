@@ -1,4 +1,5 @@
 import { BindOptions } from "dgram";
+import { date } from "joi";
 import { Column, Entity } from "typeorm";
 import { IOrder } from "../interfaces";
 import { RootEntity } from "./root-entity";
@@ -13,6 +14,26 @@ export enum EOrderStatus {
 
 @Entity()
 export class Order extends  RootEntity implements IOrder{
+
+    /**
+     *  initialization constructor, assumes the data is safe
+     */
+    constructor(data?:{
+        name: string,
+        desc: string,
+        status: number,
+        dueDate: Date,
+        salePrice: string,
+    }) {
+        super();
+        if (!data) return;
+
+        this.name= data.name;
+        this.description= data.desc;
+        this.status= data.status;
+        this.dueDate= data.dueDate;
+        this.salePrice= BigInt(data.salePrice);
+    }
     
     @Column({
         type : "varchar",
@@ -28,7 +49,8 @@ export class Order extends  RootEntity implements IOrder{
 
     @Column({
         type : "varchar",
-        length : 1000
+        length : 1000,
+        default: "",
     })
     private _description : string
     get description(): string {
@@ -51,7 +73,10 @@ export class Order extends  RootEntity implements IOrder{
         this._status = status;
     }
 
-    @Column()
+    @Column({
+        type: "datetime",
+        default: null,
+    })
     private _dueDate : Date;
     get dueDate(): Date {
         return this._dueDate;
@@ -67,6 +92,7 @@ export class Order extends  RootEntity implements IOrder{
     // stored as int to avoid rounding errors
     @Column({
         type : 'bigint',
+        default: 0,
     })
     private _salePrice: bigint;
     public get salePrice(): bigint {
