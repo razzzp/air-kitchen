@@ -1,28 +1,25 @@
 import { DataSource, Repository } from "typeorm";
-import { IOrder } from "../../entities/interfaces";
+import { IEntity, IOrder } from "../../entities/interfaces";
 import { Order } from "../../entities/typeorm-entities/order";
-import { IOrderRepository } from "../interfaces";
-import { getMySQLDataSource } from "./data-sources";
-import { TypeORMRepository } from "./typeorm-repository";
+import { RootEntity } from "../../entities/typeorm-entities/root-entity";
+import { IOrderRepository, IRepository } from "../interfaces";
 
-/** @deprecated */
-export class OrderRepository implements IOrderRepository {
-
+export class TypeORMRepository<T extends RootEntity> implements IRepository{
     private _dataSource : DataSource;
     get dataSource() : DataSource {
         return this._dataSource;
     }
 
-    private _repo : Repository<Order>
-    get repo() : Repository<Order> {
+    private _repo : Repository<T>
+    get repo() : Repository<T> {
         return this._repo;
     }
     /**
      *  Need to set the datasource to use
      */
-    constructor(dataSource : DataSource) {
+    constructor(dataSource: DataSource, classType : any) {
         this._dataSource = dataSource;
-        this._repo = dataSource.getRepository(Order);
+        this._repo = dataSource.getRepository(classType);
     }
 
 
@@ -30,11 +27,11 @@ export class OrderRepository implements IOrderRepository {
         throw new Error("Method not implemented.");
     }
 
-    async save(entity: IOrder): Promise<IOrder> {
+    async save(entity: T): Promise<T> {
         return await this.repo.save(entity);
     }
     
-    async find() {
+    async find() : Promise<Array<T>> {
         return await this.repo.find();
     }
 
@@ -42,4 +39,3 @@ export class OrderRepository implements IOrderRepository {
         // this.dataSource.destroy()    
     }
 }
-

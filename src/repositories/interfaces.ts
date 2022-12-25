@@ -1,4 +1,5 @@
 import { IEntity, IOrder } from "../entities/interfaces";
+import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
 
 export interface IRepository {
     doesTableExist() : Promise<boolean>;
@@ -10,6 +11,7 @@ export interface IRepository {
     // findOneBy(criteria : Object) : Promise<IEntity>;
 }
 
+/** @deprecated */
 export interface IOrderRepository extends IRepository{
     /** @override */
     save(entity : IOrder) : Promise<IOrder>;

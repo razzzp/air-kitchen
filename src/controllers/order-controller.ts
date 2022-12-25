@@ -1,13 +1,12 @@
 import Express from "express";
 import { Order } from "../entities/typeorm-entities/order";
-import { getMySQLDataSource } from "../repositories/typeorm-repositories/data-sources";
-import { OrderRepository } from "../repositories/typeorm-repositories/order-repository";
+import { getOrderRepository } from "../repositories/typeorm-repositories/repositories";
 import { IValidator } from "../validators/ivalidator";
 import { OrderValidator } from "../validators/joi/order-validator";
 
 
 export class OrderController {
-    protected static _getNewOrderValidator() : IValidator {
+    protected static _getNewValidator() : IValidator {
         return new OrderValidator();
     }
 
@@ -18,8 +17,7 @@ export class OrderController {
      * @param next express next function
      */
     public static async retrieveOrders(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
-        const dataSource = getMySQLDataSource();
-        const orderRepo = new OrderRepository(dataSource);
+        const orderRepo = getOrderRepository();
         const queryResults = await orderRepo.find();
         const viewResults = queryResults.map((curOrder)=> {
             return {
@@ -45,13 +43,12 @@ export class OrderController {
         // parse and validate body
         const requestBody = req.body;
         console.log(requestBody); 
-        const orderValidator = OrderController._getNewOrderValidator();
+        const orderValidator = OrderController._getNewValidator();
         const validationResult = orderValidator.validate(requestBody);
        
         // const queryResults = orderRepo.save();
         if (!validationResult.error){
-            const dataSource = getMySQLDataSource();
-            const orderRepo = new OrderRepository(dataSource);
+            const orderRepo = getOrderRepository();
             const newOrder = new Order(validationResult.value);
             const savedOrder = await orderRepo.save(newOrder);
             res.json(savedOrder);

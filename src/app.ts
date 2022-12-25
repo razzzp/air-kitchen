@@ -5,6 +5,9 @@ import createError from 'http-errors';
 import "reflect-metadata";
 import { orderRouter } from './routes/api-v1/order-router';
 import { initializeDataSource } from './repositories/typeorm-repositories/data-sources';
+import passport, { Passport } from 'passport';
+import { AuthenticationController } from './auth/auth';
+import { authRouter } from './routes/api-v1/auth-router';
 
 
 const app = Express();
@@ -22,12 +25,16 @@ initializeDataSource()
 // middle wares
 app.use(Express.urlencoded({ extended: false }));
 app.use(Express.json());
-app.use(CookieParser());
 app.use(Express.static(Path.join(process.cwd(), 'public')));
+
+//auth
+passport.use(AuthenticationController.getLocalStrategy());
 
 // routes
 //  orders
 app.use('/api/v1', orderRouter);
+// registration & authentication
+app.use('/api/v1', authRouter);
 
 app.get('/', function(req : any, res : any, next : any){
     res.send('hiiiii');

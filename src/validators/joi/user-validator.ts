@@ -1,7 +1,7 @@
-import joi from "joi";
 import { IValidator, TValidationResult } from "../ivalidator";
+import joi from "joi"
 
-export class OrderValidator implements IValidator{
+export class UserValidator implements IValidator{
     private _joiOrderValidator : joi.Schema;
 
     /**
@@ -9,11 +9,8 @@ export class OrderValidator implements IValidator{
      */
     constructor() {
         this._joiOrderValidator =  joi.object().keys({
-            name: joi.string().max(255).required().alphanum(),
-            description: joi.string().max(1000).default(""),
-            status: joi.number().min(0).max(4).default(0),
-            dueDate: joi.date().iso(),
-            salePrice: joi.string().pattern(/[/d]*/).default('0')
+            email: joi.string().max(64).required().email(),
+            name: joi.string().max(64).required().alphanum(),
         });
     }
 
