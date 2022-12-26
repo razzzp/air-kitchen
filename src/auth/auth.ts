@@ -1,36 +1,56 @@
 import { Strategy } from "passport-local";
 import Express from "express";
-import { UserController } from "../controllers/user-controller";
 import { getMySQLDataSource } from "../repositories/typeorm-repositories/data-sources";
 import crypto from "crypto";
 import { UserValidator } from "../validators/joi/user-validator";
 import { User } from "../entities/typeorm-entities/user";
+import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
+import { LocalCredentialsValidator } from "../validators/joi/local-credential-validator";
+import { getUserRepository } from "../repositories/typeorm-repositories/repositories";
 
 export class AuthenticationController {
     public static verifyLocalStrategy() {
     
     }
 
+    private static _getUserValidator() {
+        return new UserValidator()
+    }
+
+    private static _getLocalCredentialsValidator() {
+        return new LocalCredentialsValidator()
+    }
+
+    private static async _isEmailUnique(email : string){
+        const userRepo = getUserRepository();
+        return (await userRepo.find({email: email})).length === 0;
+    }
 
     public static async register(req: Express.Request, res: Express.Response, next: Express.NextFunction){
         const {email, name, password} = req.body;
-        // password cannot be too short
-        if (typeof password !== 'string' || password.length < 6) {
-            next('Password should be at least 6 characters.')
+
+        // validate password
+        const localCredentialsValidator = AuthenticationController._getLocalCredentialsValidator();
+        const localCredsValidationResult = localCredentialsValidator.validate({password});
+        if (localCredsValidationResult.error){
+            return next(localCredsValidationResult.error);
         }
         // validate user data
         const newUserData = {
             email: email,
             name: name,
         }
-        const userValidator = new UserValidator();
+        const userValidator = AuthenticationController._getUserValidator();
         const userValidationResult = userValidator.validate(newUserData);
         // don't continue if error
         if (userValidationResult.error){
-            next(userValidationResult.error);
+            return next(userValidationResult.error);
         }
-
         const validatedUser = userValidationResult.value;
+        // check email doesn't exist
+        if (!(await AuthenticationController._isEmailUnique(validatedUser.email))){
+            return next("Email already exists");
+        }
         // generate 32 byte hash using pbkdf2'
         //  using 16 bytes salt
         //  310,000 iterations,
@@ -46,16 +66,16 @@ export class AuthenticationController {
         let savedUser = null;
         // use transaction to save the user and credentials
         const transaction = await getMySQLDataSource().transaction(async (entityManager) => {
-            savedUser = await entityManager.save(validatedUser);
+            savedUser = await entityManager.save(new User(validatedUser));
             // create localCredentials
             const newLocalCredentialsData = {
                 user: savedUser,
                 salt: salt,
                 hash: hash
             }
-            const savedLocalCredentials = entityManager.save(newLocalCredentialsData)
+            const savedLocalCredentials = await entityManager.save(new LocalCredentials(newLocalCredentialsData));
         })
-        res.json(savedUser);
+        return res.json(savedUser);
     }
     
     public static getLocalStrategy(){

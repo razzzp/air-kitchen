@@ -9,10 +9,10 @@ export class OrderValidator implements IValidator{
      */
     constructor() {
         this._joiOrderValidator =  joi.object().keys({
-            name: joi.string().max(255).required().alphanum(),
+            name: joi.string().max(255).required(),
             description: joi.string().max(1000).default(""),
             status: joi.number().min(0).max(4).default(0),
-            dueDate: joi.date().iso(),
+            dueDate: joi.date().iso().default(null),
             salePrice: joi.string().pattern(/[/d]*/).default('0')
         });
     }

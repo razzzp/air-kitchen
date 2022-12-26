@@ -7,34 +7,22 @@ export class User extends RootEntity implements IUser {
     /**
      *
      */
-    constructor(data: IUser) {
+    constructor(data?: IUser) {
         super();
-        this._email = data.email;
-        this._name = data.name;
+        if(!data) return;
+        this.email = data.email;
+        this.name = data.name;
     }
 
     @Column({
         type: "varchar",
         length: 254,
     })
-    private _email: string;
-    public get email(): string {
-        return this._email;
-    }
-    public set email(value: string) {
-        this._email = value;
-    }
+    public email: string;
 
     @Column({
         type: "varchar",
         length: 64,
     })
-    private _name : string
-    
-    get name(): string {
-        return this._name;
-    }
-    set name(name: string) {
-        this._name = name;
-    }  
+    public name : string
 }

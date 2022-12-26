@@ -8,6 +8,7 @@ import { initializeDataSource } from './repositories/typeorm-repositories/data-s
 import passport, { Passport } from 'passport';
 import { AuthenticationController } from './auth/auth';
 import { authRouter } from './routes/api-v1/auth-router';
+import { userRouter } from './routes/api-v1/user-routers';
 
 
 const app = Express();
@@ -35,6 +36,8 @@ passport.use(AuthenticationController.getLocalStrategy());
 app.use('/api/v1', orderRouter);
 // registration & authentication
 app.use('/api/v1', authRouter);
+// users
+app.use('/ap1/v1', userRouter);
 
 app.get('/', function(req : any, res : any, next : any){
     res.send('hiiiii');

@@ -1,4 +1,4 @@
-import { DataSource, Repository } from "typeorm";
+import { DataSource, FindManyOptions, FindOptionsWhere, Repository, SaveOptions } from "typeorm";
 import { IEntity, IOrder } from "../../entities/interfaces";
 import { Order } from "../../entities/typeorm-entities/order";
 import { RootEntity } from "../../entities/typeorm-entities/root-entity";
@@ -27,12 +27,12 @@ export class TypeORMRepository<T extends RootEntity> implements IRepository{
         throw new Error("Method not implemented.");
     }
 
-    async save(entity: T): Promise<T> {
-        return await this.repo.save(entity);
+    async save(entity: T, options?: SaveOptions): Promise<T> {
+        return await this.repo.save(entity, options);
     }
     
-    async find() : Promise<Array<T>> {
-        return await this.repo.find();
+    async find(options?: FindOptionsWhere<T> | FindOptionsWhere<T>[]) : Promise<Array<T>> {
+        return await this.repo.findBy(options);
     }
 
     destroy(): void {

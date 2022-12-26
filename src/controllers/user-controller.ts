@@ -27,7 +27,7 @@ export class UserController {
                 name : curUser.name,
             };
         });
-        res.json(viewResults);
+        return res.json(viewResults);
     }
 
     /**

@@ -10,6 +10,10 @@ export class OrderController {
         return new OrderValidator();
     }
 
+    protected static _priceToDisplay(priceString: bigint) {
+        return `\$${BigInt(priceString) / BigInt(100)}.${(BigInt(priceString) % BigInt(100)).toString().padStart(2,'0')} `
+    }
+
     /**
      * retrieves all orders
      * @param req express request object
@@ -26,11 +30,11 @@ export class OrderController {
                 name : curOrder.name,
                 description : curOrder.description,
                 status : curOrder.status.toString(),
-                salePrice : `\$${BigInt(curOrder.salePrice) / BigInt(100)}.${(BigInt(curOrder.salePrice) % BigInt(100)).toString().padStart(2,'0')} `,
-                dueDate : curOrder.dueDate.toString()
+                salePrice : (curOrder.salePrice) ? OrderController._priceToDisplay(curOrder.salePrice) : null,
+                dueDate : (curOrder.dueDate) ? curOrder.dueDate.toString() : null,
             };
         });
-        res.json(viewResults);
+        return res.json(viewResults);
     }
 
     /**
@@ -51,11 +55,11 @@ export class OrderController {
             const orderRepo = getOrderRepository();
             const newOrder = new Order(validationResult.value);
             const savedOrder = await orderRepo.save(newOrder);
-            res.json(savedOrder);
+            return res.json(savedOrder);
         } else {
             // throw new Error('something went wrong :(');
             // throw new Error(validationResult.error.annotate());
-            next(validationResult.error);
+            return next(validationResult.error);
         } 
     }
 }
