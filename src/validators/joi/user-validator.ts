@@ -10,7 +10,7 @@ export class UserValidator implements IValidator{
     constructor() {
         this._joiOrderValidator =  joi.object().keys({
             email: joi.string().max(64).required().email(),
-            name: joi.string().max(64).required().alphanum(),
+            username: joi.string().max(64).required().alphanum(),
         });
     }
 

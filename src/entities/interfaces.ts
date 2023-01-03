@@ -22,7 +22,7 @@ export interface IOrder extends IEntity {
 
 export interface IUser extends IEntity {
     email: string;
-    name: string;
+    username: string;
 }
 
 export interface ILocalCredentials extends IEntity {

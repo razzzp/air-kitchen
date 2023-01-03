@@ -3,7 +3,7 @@ import { LocalCredentials } from "../entities/typeorm-entities/local-credentials
 
 export interface IRepository {
     doesTableExist() : Promise<boolean>;
-    save(entity: IEntity, options: any) : Promise<IEntity>;
+    save(entity: IEntity, options?: any) : Promise<IEntity>;
     find(options?: any) : Promise<Array<IEntity>>;
     destroy() : void;
     // delete(entity: IEntity) : Promise<IEntity>;

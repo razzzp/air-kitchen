@@ -31,8 +31,8 @@ export class TypeORMRepository<T extends RootEntity> implements IRepository{
         return await this.repo.save(entity, options);
     }
     
-    async find(options?: FindOptionsWhere<T> | FindOptionsWhere<T>[]) : Promise<Array<T>> {
-        return await this.repo.findBy(options);
+    async find(options?: FindManyOptions<T>) : Promise<Array<T>> {
+        return await this.repo.find(options);
     }
 
     destroy(): void {

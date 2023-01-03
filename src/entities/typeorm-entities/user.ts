@@ -11,7 +11,7 @@ export class User extends RootEntity implements IUser {
         super();
         if(!data) return;
         this.email = data.email;
-        this.name = data.name;
+        this.username = data.username;
     }
 
     @Column({
@@ -24,5 +24,5 @@ export class User extends RootEntity implements IUser {
         type: "varchar",
         length: 64,
     })
-    public name : string
+    public username : string
 }

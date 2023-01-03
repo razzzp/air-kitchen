@@ -10,6 +10,10 @@ export class UserController {
         return new UserValidator();
     }
 
+    protected static _buildUserEntityFromData(data: IUser) : IUser {
+        return new User(data);
+    }
+
     /**
      * retrieves all orders
      * @param req express request object
@@ -24,7 +28,7 @@ export class UserController {
                 id : curUser.id,
                 creationDate : curUser.creationDate.toString(),
                 email: curUser.email,
-                name : curUser.name,
+                username : curUser.username,
             };
         });
         return res.json(viewResults);
@@ -45,7 +49,7 @@ export class UserController {
         // const queryResults = orderRepo.save();
         if (!validationResult.error){
             const userRepo = getUserRepository();
-            const newUser = new User(validationResult.value);
+            const newUser = UserController._buildUserEntityFromData(validationResult.value);
             const savedUser = await userRepo.save(newUser);
             return savedUser;
         } else {

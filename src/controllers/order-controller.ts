@@ -3,7 +3,7 @@ import { Order } from "../entities/typeorm-entities/order";
 import { getOrderRepository } from "../repositories/typeorm-repositories/repositories";
 import { IValidator } from "../validators/ivalidator";
 import { OrderValidator } from "../validators/joi/order-validator";
-
+import { IOrder, EOrderStatus } from "../entities/interfaces"
 
 export class OrderController {
     protected static _getNewValidator() : IValidator {
@@ -12,6 +12,19 @@ export class OrderController {
 
     protected static _priceToDisplay(priceString: bigint) {
         return `\$${BigInt(priceString) / BigInt(100)}.${(BigInt(priceString) % BigInt(100)).toString().padStart(2,'0')} `
+    }
+
+    protected static _instanceOfIOrder(object: any) : object is IOrder {
+        let result ='name' in object ;
+        result  &&= 'description' in object;
+        result  &&= 'status' in object && object.status in EOrderStatus;
+        result  &&= 'dueDate' in  object && (object.dueDate === null || object.dueDate instanceof Date);
+        result  &&= 'salePrice' in object && typeof object.salePrice === 'string';
+        return result;
+    }
+
+    protected static _buildOrderEntityFromData(data: IOrder) : IOrder {
+        return new Order(data);
     }
 
     /**
@@ -24,6 +37,7 @@ export class OrderController {
         const orderRepo = getOrderRepository();
         const queryResults = await orderRepo.find();
         const viewResults = queryResults.map((curOrder)=> {
+            if (!OrderController._instanceOfIOrder(curOrder)) return;
             return {
                 id : curOrder.id,
                 creationDate : curOrder.creationDate.toString(),
@@ -53,7 +67,7 @@ export class OrderController {
         // const queryResults = orderRepo.save();
         if (!validationResult.error){
             const orderRepo = getOrderRepository();
-            const newOrder = new Order(validationResult.value);
+            const newOrder = OrderController._buildOrderEntityFromData(validationResult.value);
             const savedOrder = await orderRepo.save(newOrder);
             return res.json(savedOrder);
         } else {

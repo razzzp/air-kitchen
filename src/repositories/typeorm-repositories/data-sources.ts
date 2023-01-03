@@ -29,6 +29,7 @@ export function buildMySQLDataSource() : DataSource {
         entities: [Order, User, LocalCredentials],
         subscribers: [],
         migrations: [],
+        //dropSchema:true
     });
 }
 

@@ -8,6 +8,8 @@
   },
   "dependencies": {
     "@types/joi": "^17.2.3",
+    "@types/passport-anonymous": "^1.0.3",
+    "@types/passport-http": "^0.3.9",
     "debug": "~2.6.9",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
@@ -16,7 +18,8 @@
     "morgan": "~1.9.1",
     "mysql": "^2.18.1",
     "passport": "^0.6.0",
-    "passport-local": "^1.0.0",
+    "passport-anonymous": "^1.0.1",
+    "passport-http": "^0.3.0",
     "pug": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "typeorm": "^0.3.11"
