@@ -1,6 +1,8 @@
-import { Column, Entity } from "typeorm";
+
+import { Column, Entity, ManyToOne } from "typeorm";
 import { EOrderStatus, IOrder } from "../interfaces";
 import { RootEntity } from "./root-entity";
+import { User } from "./user";
 
 
 
@@ -53,5 +55,9 @@ export class Order extends RootEntity implements IOrder{
         default: 0,
     })
     public salePrice: bigint;
+
+    @ManyToOne(
+        ()=>User)
+    public creator: User;
    
 }

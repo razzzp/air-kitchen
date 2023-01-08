@@ -3,7 +3,8 @@ import { Order } from "../entities/typeorm-entities/order";
 import { getOrderRepository } from "../repositories/typeorm-repositories/repositories";
 import { IValidator } from "../validators/ivalidator";
 import { OrderValidator } from "../validators/joi/order-validator";
-import { IOrder, EOrderStatus } from "../entities/interfaces"
+import { IOrder, EOrderStatus, IUser } from "../entities/interfaces"
+import { IsNull } from "typeorm";
 
 export class OrderController {
     protected static _getNewValidator() : IValidator {
@@ -35,7 +36,25 @@ export class OrderController {
      */
     public static async retrieveOrders(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
         const orderRepo = getOrderRepository();
-        const queryResults = await orderRepo.find();
+        let queryOptions = null;
+        // if user exist, search order for specific users only
+        if (req.user && (<any>req.user).id) {
+            queryOptions = {
+                relations: {
+                    creator: true
+                },
+                where:{
+                    creator:{id: (<any>req.user).id}
+                }
+            }
+        } else {
+            queryOptions = {
+                where:{
+                    creator: IsNull()
+                }
+            }
+        }
+        const queryResults = await orderRepo.find(queryOptions);
         const viewResults = queryResults.map((curOrder)=> {
             if (!OrderController._instanceOfIOrder(curOrder)) return;
             return {
@@ -46,6 +65,7 @@ export class OrderController {
                 status : curOrder.status.toString(),
                 salePrice : (curOrder.salePrice) ? OrderController._priceToDisplay(curOrder.salePrice) : null,
                 dueDate : (curOrder.dueDate) ? curOrder.dueDate.toString() : null,
+                creator: (curOrder.creator)
             };
         });
         return res.json(viewResults);
@@ -58,6 +78,7 @@ export class OrderController {
      * @param next 
      */
     public static async createOrder(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
+        if(!req.user) return res.status(401).send('Unauthorized');
         // parse and validate body
         const requestBody = req.body;
         console.log(requestBody); 
@@ -66,8 +87,10 @@ export class OrderController {
        
         // const queryResults = orderRepo.save();
         if (!validationResult.error){
+            const validatedOrder = <IOrder>(validationResult.value);
             const orderRepo = getOrderRepository();
-            const newOrder = OrderController._buildOrderEntityFromData(validationResult.value);
+            const newOrder = OrderController._buildOrderEntityFromData(validatedOrder);
+            newOrder.creator = <IUser>req.user;
             const savedOrder = await orderRepo.save(newOrder);
             return res.json(savedOrder);
         } else {

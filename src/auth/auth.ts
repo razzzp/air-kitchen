@@ -6,7 +6,7 @@ import { User } from "../entities/typeorm-entities/user";
 import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
 import { LocalCredentialsValidator } from "../validators/joi/local-credential-validator";
 import { getUserRepository } from "../repositories/typeorm-repositories/repositories";
-import { ILocalCredentials } from "../entities/interfaces";
+import { ILocalCredentials, IUser } from "../entities/interfaces";
 import { getLocalCredentialsRepository } from "../repositories/typeorm-repositories/repositories"
 import { BasicStrategy } from 'passport-http'
 
@@ -39,7 +39,6 @@ export class AuthenticationController {
         username: string,
         password: string,
         done: (error: any, user?: any) => void,) {
-            //TODO
             // search for credentials with corresponding user name
             const localCred = await AuthenticationController._getCredentials(username);
             if (!localCred) return done('Wrong username/password', false);
@@ -89,13 +88,14 @@ export class AuthenticationController {
         if (userValidationResult.error){
             return next(userValidationResult.error);
         }
-        const validatedUser = userValidationResult.value;
+        // should be safe todo
+        const validatedUser = <IUser>(userValidationResult.value);
         // check email doesn't exist
         if (!(await AuthenticationController._isEmailUnique(validatedUser.email))){
             return next("Email already exists");
         }
         // check username doesn't exist
-        if (!(await AuthenticationController._isUsernameUnique(validatedUser.name))){
+        if (!(await AuthenticationController._isUsernameUnique(validatedUser.username))){
             return next("Username already exists");
         }
         // generate 32 byte hash using pbkdf2'

@@ -18,6 +18,7 @@ export interface IOrder extends IEntity {
     status: EOrderStatus;
     dueDate: Date;  
     salePrice: bigint;
+    creator: IUser;
 }
 
 export interface IUser extends IEntity {

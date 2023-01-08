@@ -13,7 +13,7 @@ export class OrderValidator implements IValidator{
             description: joi.string().max(1000).default(""),
             status: joi.number().min(0).max(4).default(0),
             dueDate: joi.date().iso().default(null),
-            salePrice: joi.string().pattern(/[/d]*/).default('0')
+            salePrice: joi.string().pattern(new RegExp("^(-|\\+)?[\\d]+$")).default('0')
         });
     }
 
