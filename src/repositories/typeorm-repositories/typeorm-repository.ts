@@ -1,10 +1,8 @@
-import { DataSource, FindManyOptions, FindOptionsWhere, Repository, SaveOptions } from "typeorm";
-import { IEntity, IOrder } from "../../entities/interfaces";
-import { Order } from "../../entities/typeorm-entities/order";
+import { DataSource, FindManyOptions, FindOneOptions, FindOptionsWhere, Repository, SaveOptions } from "typeorm";
 import { RootEntity } from "../../entities/typeorm-entities/root-entity";
 import { IOrderRepository, IRepository } from "../interfaces";
 
-export class TypeORMRepository<T extends RootEntity> implements IRepository{
+export class TypeORMRepository<T extends RootEntity> implements IRepository<T>{
     private _dataSource : DataSource;
     get dataSource() : DataSource {
         return this._dataSource;
@@ -34,6 +32,16 @@ export class TypeORMRepository<T extends RootEntity> implements IRepository{
     async find(options?: FindManyOptions<T>) : Promise<Array<T>> {
         return await this.repo.find(options);
     }
+
+    async findOne(options?: FindOneOptions<T>) : Promise<T> {
+        return await this.repo.findOne(options);
+    }
+
+    async findOneBy(options?: FindOptionsWhere<T>) : Promise<T> {
+        return await this.repo.findOneBy(options);
+    }
+
+
 
     destroy(): void {
         // this.dataSource.destroy()    

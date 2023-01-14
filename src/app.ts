@@ -9,8 +9,6 @@ import passport, { Passport } from 'passport';
 import { AuthenticationController } from './auth/auth';
 import { authRouter } from './routes/api-v1/auth-router';
 import { userRouter } from './routes/api-v1/user-routers';
-import { Strategy as AnonymousStrategy }  from 'passport-anonymous'
-
 
 const app = Express();
 const port = 3000;
@@ -18,10 +16,11 @@ const port = 3000;
 // initialize data source/connect to DB
 initializeDataSource()
 .then((dataSource)=>{
-    console.log(`⚡[database]: Successfully connected to data source.`);
+    console.log(`[database]: Successfully connected to data source.`);
 })
-.catch(err => {
-    throw err;
+.catch(reason => {
+    console.error(`[error] Failed to database: ${reason}`);
+    process.exit();
 });
 
 // middle wares
@@ -62,7 +61,7 @@ app.use(function(err : any, req : any, res : any, next : any) {
 });
 
 app.listen(port, () => {
-    console.log(`⚡️[server]: Server is running at https://localhost:${port}`);
+    console.log(`[server]: Server is running at https://localhost:${port}`);
 });
 
 module.exports = app;

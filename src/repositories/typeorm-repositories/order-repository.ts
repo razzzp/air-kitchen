@@ -24,6 +24,12 @@ export class OrderRepository implements IOrderRepository {
         this._dataSource = dataSource;
         this._repo = dataSource.getRepository(Order);
     }
+    findOne(options?: any): Promise<IOrder> {
+        throw new Error("Method not implemented.");
+    }
+    findOneBy(options?: any): Promise<IOrder> {
+        throw new Error("Method not implemented.");
+    }
 
 
     doesTableExist(): Promise<boolean> {
@@ -37,6 +43,8 @@ export class OrderRepository implements IOrderRepository {
     async find() {
         return await this.repo.find();
     }
+
+    
 
     destroy(): void {
         // this.dataSource.destroy()    

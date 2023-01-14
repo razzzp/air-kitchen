@@ -4,7 +4,6 @@ import  dotenv  from "dotenv";
 import { User } from "../../entities/typeorm-entities/user";
 import { LocalCredentials } from "../../entities/typeorm-entities/local-credentials";
 
-
 let _dataSource : DataSource = null;
 
 /**
@@ -33,13 +32,15 @@ export function buildMySQLDataSource() : DataSource {
     });
 }
 
-export async function buildInitializedMySQLDataSource() : Promise<DataSource> {
+export async function buildAndInitializeMySQLDataSource() : Promise<DataSource> {
     const newDataSource = buildMySQLDataSource();
-    await newDataSource.initialize();
-    return newDataSource;
+    return newDataSource.initialize();
 }
 
 export async function initializeDataSource() : Promise<DataSource>{
-    _dataSource = await buildInitializedMySQLDataSource();
-    return _dataSource;
+    const dataSource =  buildAndInitializeMySQLDataSource();
+    dataSource.then(value => {
+        _dataSource = value;
+    });
+    return dataSource;
 }

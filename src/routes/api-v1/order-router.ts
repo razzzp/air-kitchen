@@ -13,7 +13,10 @@ orderRouter.route('/orders')
         passport.authenticate(['basic'],{session:false}),
         OrderController.createOrder);
 
-orderRouter.route('/orders/:id')
-    .get()
+orderRouter.route('/orders/:orderId')
+    .get(
+        passport.authenticate(['basic'],{session:false}),
+        OrderController.getOrder
+    )
     .put()
     .delete();

@@ -100,5 +100,6 @@
     // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
     "skipLibCheck": true                                 /* Skip type checking all .d.ts files. */
   },
-  "exclude": ["./src/repositories/my-repositories/*.ts"]
+  "exclude": ["./src/repositories/my-repositories/*.ts"],
+  // "files": ["./src/index.d.ts"]
 }

@@ -1,10 +1,11 @@
-import Express from "express";
+import Express, { NextFunction } from "express";
 import { Order } from "../entities/typeorm-entities/order";
 import { getOrderRepository } from "../repositories/typeorm-repositories/repositories";
 import { IValidator } from "../validators/ivalidator";
 import { OrderValidator } from "../validators/joi/order-validator";
 import { IOrder, EOrderStatus, IUser } from "../entities/interfaces"
 import { IsNull } from "typeorm";
+import { isValidId } from "../validators/joi/id-validator";
 
 export class OrderController {
     protected static _getNewValidator() : IValidator {
@@ -15,7 +16,7 @@ export class OrderController {
         return `\$${BigInt(priceString) / BigInt(100)}.${(BigInt(priceString) % BigInt(100)).toString().padStart(2,'0')} `
     }
 
-    protected static _instanceOfIOrder(object: any) : object is IOrder {
+    protected static _isInstanceOfIOrder(object: any) : object is IOrder {
         let result ='name' in object ;
         result  &&= 'description' in object;
         result  &&= 'status' in object && object.status in EOrderStatus;
@@ -26,6 +27,19 @@ export class OrderController {
 
     protected static _buildOrderEntityFromData(data: IOrder) : IOrder {
         return new Order(data);
+    }
+
+    protected static _getOrderForView(order: IOrder): Record<string, any> {
+        return {
+            id : order.id,
+            creationDate : order.creationDate.toString(),
+            name : order.name,
+            description : order.description,
+            status : order.status.toString(),
+            salePrice : (order.salePrice) ? OrderController._priceToDisplay(order.salePrice) : null,
+            dueDate : (order.dueDate) ? order.dueDate.toString() : null,
+            creator: (order.creator)
+        };
     }
 
     /**
@@ -56,17 +70,8 @@ export class OrderController {
         }
         const queryResults = await orderRepo.find(queryOptions);
         const viewResults = queryResults.map((curOrder)=> {
-            if (!OrderController._instanceOfIOrder(curOrder)) return;
-            return {
-                id : curOrder.id,
-                creationDate : curOrder.creationDate.toString(),
-                name : curOrder.name,
-                description : curOrder.description,
-                status : curOrder.status.toString(),
-                salePrice : (curOrder.salePrice) ? OrderController._priceToDisplay(curOrder.salePrice) : null,
-                dueDate : (curOrder.dueDate) ? curOrder.dueDate.toString() : null,
-                creator: (curOrder.creator)
-            };
+            if (!OrderController._isInstanceOfIOrder(curOrder)) return;
+            return OrderController._getOrderForView(curOrder);
         });
         return res.json(viewResults);
     }
@@ -98,5 +103,24 @@ export class OrderController {
             // throw new Error(validationResult.error.annotate());
             return next(validationResult.error);
         } 
+    }
+
+    public static async getOrder(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+        if(!req.user) return res.status(401).send('Unauthorized');
+
+        const { orderId } = req.params;
+        if (!isValidId(orderId)) return res.status(400).send('Invalid Order Id');
+
+        const orderRepo = getOrderRepository();
+        // load creator field
+        const retrievedOrder = await orderRepo.findOne({
+            relations: {creator: true},
+            where: {id: orderId}
+        });
+        if (!retrievedOrder) return res.status(400).send('Order doesn\'t exist')
+
+        if(req.user.id !==  retrievedOrder.creator.id) return res.status(401).send('Unauthorized');
+
+        return res.json(OrderController._getOrderForView(retrievedOrder));
     }
 }
