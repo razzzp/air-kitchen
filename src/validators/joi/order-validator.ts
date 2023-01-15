@@ -1,19 +1,20 @@
-import joi from "joi";
+import Joi from "joi";
 import { IValidator, TValidationResult } from "../ivalidator";
+import { getIdValidator } from "./id-validator";
 
-export class OrderValidator implements IValidator{
-    private _joiOrderValidator : joi.Schema;
+export class OrderPartialValidator implements IValidator{
+    protected _joiOrderValidator : Joi.ObjectSchema;
 
     /**
      *
      */
     constructor() {
-        this._joiOrderValidator =  joi.object().keys({
-            name: joi.string().max(255).required(),
-            description: joi.string().max(1000).default(""),
-            status: joi.number().min(0).max(4).default(0),
-            dueDate: joi.date().iso().default(null),
-            salePrice: joi.string().pattern(new RegExp("^(-|\\+)?[\\d]+$")).default('0')
+        this._joiOrderValidator =  Joi.object().keys({
+            name: Joi.string().max(255),
+            description: Joi.string().max(1000),
+            status: Joi.number().min(0).max(4),
+            dueDate: Joi.date().iso(),
+            salePrice: Joi.string().pattern(new RegExp("^(-|\\+)?[\\d]+$"))
         });
     }
 
@@ -25,5 +26,44 @@ export class OrderValidator implements IValidator{
             value: joiResult.value,
         }
         return result;
+    }
+}
+
+
+export class OrderPostValidator extends OrderPartialValidator{
+
+    /**
+     *
+     */
+    constructor() {
+        super();
+        // modifies parent joi schema to require certain fields
+        //  and inlcude default values]
+        const base = this._joiOrderValidator;
+        this._joiOrderValidator = base.keys({
+            id: Joi.any().forbidden(),
+            name: base.extract('name').required(),
+            description: base.extract('description').default(""),
+            status: base.extract('status').default(0),
+            dueDate: base.extract('dueDate').default(null),
+            salePrice: base.extract('salePrice').default('0')        
+        })
+    }
+}
+
+export class OrderPutValidator extends OrderPartialValidator{
+
+    /**
+     *
+     */
+    constructor() {
+        super();
+        // modifies parent joi schema to require certain fields
+        //  and inlcude default values
+        this._joiOrderValidator = this._joiOrderValidator.keys({
+            id: getIdValidator(),
+            creator: Joi.any().forbidden(),
+            creationDate: Joi.any().forbidden()
+        })
     }
 }

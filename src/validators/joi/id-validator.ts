@@ -1,10 +1,13 @@
 
 import Joi from "joi";
 
-export const isValidId = (Id: any) : Id is number => {
+export const getIdValidator = () => Joi.number().positive().integer().required();
+
+export const isValidId = (id: any) : id is number => {
+    if (!id) return false;
     // valid id is a positive integer
     //  if no error it is a valid id
-    const valResult = Joi.number().positive().integer().required().validate(Id);
+    const valResult = getIdValidator().validate(id);
     return !(valResult.error) ;
 }
 

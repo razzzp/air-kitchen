@@ -2,21 +2,37 @@
 import  express from "express"
 import passport from "passport";
 import { OrderController } from "../../controllers/order-controller";
+import { Order } from "../../entities/typeorm-entities/order";
+import { wrapFuncInTryCatch } from "../utils";
 
 export const orderRouter = express.Router();
 
 orderRouter.route('/orders')
     .get(
         passport.authenticate(['basic'],{session:false}),
-        OrderController.retrieveOrders)
+        wrapFuncInTryCatch(OrderController.retrieveOrders)
+    )
     .post(
         passport.authenticate(['basic'],{session:false}),
-        OrderController.createOrder);
+        wrapFuncInTryCatch(OrderController.createOrder)
+    );
 
 orderRouter.route('/orders/:orderId')
     .get(
         passport.authenticate(['basic'],{session:false}),
-        OrderController.getOrder
+        wrapFuncInTryCatch(OrderController.getOrder),
+        wrapFuncInTryCatch(OrderController.authorizeUserForOrder),
+        wrapFuncInTryCatch(OrderController.retrieveOrder)
     )
-    .put()
-    .delete();
+    .put(
+        passport.authenticate(['basic'],{session:false}),
+        wrapFuncInTryCatch(OrderController.getOrder),
+        wrapFuncInTryCatch(OrderController.authorizeUserForOrder),
+        wrapFuncInTryCatch(OrderController.updateOrder)
+    )
+    .delete(
+        passport.authenticate(['basic'],{session:false}),
+        wrapFuncInTryCatch(OrderController.getOrder),
+        wrapFuncInTryCatch(OrderController.authorizeUserForOrder),
+        wrapFuncInTryCatch(OrderController.deleteOrder)
+    );

@@ -24,6 +24,12 @@ export class OrderRepository implements IOrderRepository {
         this._dataSource = dataSource;
         this._repo = dataSource.getRepository(Order);
     }
+    delete(options?: any): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
+    update(criteria: any, partialEntity: any): Promise<any> {
+        throw new Error("Method not implemented.");
+    }
     findOne(options?: any): Promise<IOrder> {
         throw new Error("Method not implemented.");
     }

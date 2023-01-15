@@ -39,15 +39,20 @@ export class AuthenticationController {
         username: string,
         password: string,
         done: (error: any, user?: any) => void,) {
-            // search for credentials with corresponding user name
-            const localCred = await AuthenticationController._getCredentials(username);
-            if (!localCred) return done('Wrong username/password', false);
-            const calcHash = AuthenticationController._calculateHash(password, localCred.salt);
-            if (calcHash.equals(localCred.hash)){
-                return done(null, localCred.user);
-            } else {
-                return done('Wrong username/password', false);
-            }
+            // wrap in try catch to prevent crashing
+            try {
+                 // search for credentials with corresponding user name
+                const localCred = await AuthenticationController._getCredentials(username);
+                if (!localCred) return done('Wrong username/password', false);
+                const calcHash = AuthenticationController._calculateHash(password, localCred.salt);
+                if (calcHash.equals(localCred.hash)){
+                    return done(null, localCred.user);
+                } else {
+                    return done('Wrong username/password', false);
+                }
+            } catch (error) {
+                return done(`Something went wrong\n${error}`, false);
+            }     
     }
 
     private static _getUserValidator() {

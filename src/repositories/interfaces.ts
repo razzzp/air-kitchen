@@ -1,5 +1,4 @@
 import { IEntity, IOrder } from "../entities/interfaces";
-import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
 
 export interface IRepository<T extends IEntity> {
     doesTableExist() : Promise<boolean>;
@@ -7,7 +6,9 @@ export interface IRepository<T extends IEntity> {
     find(options?: any) : Promise<Array<T>>;
     findOne(options?: any): Promise<T>;
     findOneBy(options?: any) : Promise<T>;
+    delete(options?: any): Promise<any>
     destroy() : void;
+    update(criteria: any, partialEntity: any) : Promise<any>;
     // delete(entity: IEntity) : Promise<IEntity>;
     // findBy(criteria: Object) : Promise<Array<IEntity>>;
     // findOneBy(criteria : Object) : Promise<IEntity>;
