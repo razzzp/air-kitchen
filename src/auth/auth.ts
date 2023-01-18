@@ -9,6 +9,9 @@ import { getUserRepository } from "../repositories/typeorm-repositories/reposito
 import { ILocalCredentials, IUser } from "../entities/interfaces";
 import { getLocalCredentialsRepository } from "../repositories/typeorm-repositories/repositories"
 import { BasicStrategy } from 'passport-http'
+import { OAuth2Client } from "google-auth-library";
+
+const CLIENT_ID = '325790205622-r4pns2qk3lni19mrud8pvlp69dc3q4ea.apps.googleusercontent.com'
 
 export class AuthenticationController {
     private static async _getCredentials(username :string) : Promise<ILocalCredentials> {
@@ -132,8 +135,30 @@ export class AuthenticationController {
             res.send('failed to login...');
         }
     }
+
+    public static async testGoogleLogin(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+        const data = req.body;
+        const client = new OAuth2Client(CLIENT_ID);
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken: data.credential,
+                audience: CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
+                // Or, if multiple clients access the backend:
+                //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+            });
+            const payload = ticket.getPayload();
+            const userid = payload ? payload['sub'] : null;
+            // If request specified a G Suite domain:
+            // const domain = payload['hd'];
+            console.log(payload)
+            return res.send(payload);
+        } catch (e) {
+            console.error(e);
+            return next(e);
+        }
+    }
     
     public static getBasicStrategy(){
         return new BasicStrategy(AuthenticationController.verifyBasicStrategy)
-    }    
+    }
 }

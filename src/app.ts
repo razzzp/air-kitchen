@@ -9,9 +9,10 @@ import passport, { Passport } from 'passport';
 import { AuthenticationController } from './auth/auth';
 import { authRouter } from './routes/api-v1/auth-router';
 import { userRouter } from './routes/api-v1/user-routers';
+import Cors from 'cors';
 
 const app = Express();
-const port = 3000;
+const port = 3001;
 
 // initialize data source/connect to DB
 initializeDataSource()
@@ -24,9 +25,12 @@ initializeDataSource()
 });
 
 // middle wares
+// allow cors
+app.use(Cors());
 app.use(Express.urlencoded({ extended: false }));
 app.use(Express.json());
 app.use(Express.static(Path.join(process.cwd(), 'public')));
+
 
 //auth
 passport.use(AuthenticationController.getBasicStrategy())

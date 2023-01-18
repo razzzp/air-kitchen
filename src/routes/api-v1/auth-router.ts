@@ -17,3 +17,8 @@ authRouter.route('/login')
         passport.authenticate('basic', {session:false}),
         wrapFuncInTryCatch(AuthenticationController.login)
     );
+
+authRouter.route('/testgooglelogin')
+    .post(
+        wrapFuncInTryCatch(AuthenticationController.testGoogleLogin)
+    );
