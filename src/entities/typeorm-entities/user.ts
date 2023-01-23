@@ -12,6 +12,7 @@ export class User extends RootEntity implements IUser {
         if(!data) return;
         this.email = data.email;
         this.username = data.username;
+        this.displayName = data.displayName;
     }
 
     @Column({
@@ -25,4 +26,10 @@ export class User extends RootEntity implements IUser {
         length: 64,
     })
     public username : string
+
+    @Column({
+        type: "varchar",
+        length: 64,
+    })
+    public displayName? : string
 }

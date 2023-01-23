@@ -4,9 +4,10 @@ export interface IRepository<T extends IEntity> {
     doesTableExist() : Promise<boolean>;
     save(entity: T, options?: any) : Promise<T>;
     find(options?: any) : Promise<Array<T>>;
+    findBy(where? : any) : Promise<Array<T>>;
     findOne(options?: any): Promise<T>;
-    findOneBy(options?: any) : Promise<T>;
-    delete(options?: any): Promise<any>
+    findOneBy(where?: any) : Promise<T>;
+    delete(criteria?: any): Promise<any>
     destroy() : void;
     update(criteria: any, partialEntity: any) : Promise<any>;
     // delete(entity: IEntity) : Promise<IEntity>;

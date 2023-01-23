@@ -14,11 +14,10 @@ authRouter.route('/register')
     
 authRouter.route('/login')
     .post(
-        passport.authenticate('basic', {session:false}),
         wrapFuncInTryCatch(AuthenticationController.login)
     );
 
-authRouter.route('/testgooglelogin')
+authRouter.route('/login-google')
     .post(
         wrapFuncInTryCatch(AuthenticationController.testGoogleLogin)
     );

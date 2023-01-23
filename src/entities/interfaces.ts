@@ -24,10 +24,25 @@ export interface IOrder extends IEntity {
 export interface IUser extends IEntity {
     email: string;
     username: string;
+    displayName?: string
 }
 
 export interface ILocalCredentials extends IEntity {
     user: IUser;
     salt: Buffer,
     hash: Buffer,
+    expiryDate?: Date,
+}
+
+export interface IAccessTokenCredential extends IEntity {
+    user: IUser,
+    token: Buffer,
+    refreshToken: IRefreshTokenCredential
+    expiryDate: Date
+}
+
+export interface IRefreshTokenCredential extends IEntity {
+    user: IUser,
+    token: Buffer,
+    expiryDate: Date
 }

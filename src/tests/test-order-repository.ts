@@ -1,5 +1,5 @@
 import { Order } from "../entities/typeorm-entities/order";
-import { getMySQLDataSource } from "../repositories/typeorm-repositories/data-sources";
+import getMySQLDataSource from "../data-sources/typeorm-datasource";
 import { IOrderRepository } from "../repositories/interfaces";
 import { OrderRepository } from "../repositories/typeorm-repositories/order-repository";
 

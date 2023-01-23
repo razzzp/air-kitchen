@@ -1,15 +1,18 @@
 import Express from "express";
-import { getMySQLDataSource } from "../repositories/typeorm-repositories/data-sources";
+import getMySQLDataSource from "../data-sources/typeorm-datasource";
 import crypto from "crypto";
 import { UserValidator } from "../validators/joi/user-validator";
 import { User } from "../entities/typeorm-entities/user";
 import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
 import { LocalCredentialsValidator } from "../validators/joi/local-credential-validator";
-import { getUserRepository } from "../repositories/typeorm-repositories/repositories";
-import { ILocalCredentials, IUser } from "../entities/interfaces";
+import { getAccessTokenRepository, getRefreshTokenRepository, getUserRepository } from "../repositories/typeorm-repositories/repositories";
+import { IAccessTokenCredential, ILocalCredentials, IUser } from "../entities/interfaces";
 import { getLocalCredentialsRepository } from "../repositories/typeorm-repositories/repositories"
 import { BasicStrategy } from 'passport-http'
 import { OAuth2Client } from "google-auth-library";
+import { RefreshTokenCredentials } from "../entities/typeorm-entities/refresh-token-credentials";
+import { AccessTokenCredentials } from "../entities/typeorm-entities/bearer-token-credentials";
+import { dateAdd } from "../utils/dates";
 
 const CLIENT_ID = '325790205622-r4pns2qk3lni19mrud8pvlp69dc3q4ea.apps.googleusercontent.com'
 
@@ -38,21 +41,28 @@ export class AuthenticationController {
             'sha256');
     }
 
+    private static async _verifyBasicCredentialsAndGetUser(username: string, password: string): Promise<{err?: string,user?: IUser}> {
+        // search for credentials with corresponding user name
+        const localCred = await AuthenticationController._getCredentials(username);
+        if (!localCred) return {err: 'Wrong username/password'};
+        const calcHash = AuthenticationController._calculateHash(password, localCred.salt);
+        if (calcHash.equals(localCred.hash)){
+            return {user: localCred.user};
+        } else {
+            return {err: 'Wrong username/password'};
+        }
+    }
+
     public static async verifyBasicStrategy(
         username: string,
         password: string,
         done: (error: any, user?: any) => void,) {
             // wrap in try catch to prevent crashing
             try {
-                 // search for credentials with corresponding user name
-                const localCred = await AuthenticationController._getCredentials(username);
-                if (!localCred) return done('Wrong username/password', false);
-                const calcHash = AuthenticationController._calculateHash(password, localCred.salt);
-                if (calcHash.equals(localCred.hash)){
-                    return done(null, localCred.user);
-                } else {
-                    return done('Wrong username/password', false);
-                }
+                // search for credentials with corresponding user name
+                const {err, user} = await AuthenticationController._verifyBasicCredentialsAndGetUser(username, password);
+                if (err) return done('Wrong username/password', false)
+                else return done(null, user);
             } catch (error) {
                 return done(`Something went wrong\n${error}`, false);
             }     
@@ -77,7 +87,7 @@ export class AuthenticationController {
     }
 
     public static async register(req: Express.Request, res: Express.Response, next: Express.NextFunction){
-        const {email, username, password} = req.body;
+        const {email, username, password, displayName} = req.body;
 
         // validate password
         const localCredentialsValidator = AuthenticationController._getLocalCredentialsValidator();
@@ -89,7 +99,8 @@ export class AuthenticationController {
         const newUserData = {
             email: email,
             username: username,
-        }
+            displayName: displayName ? displayName : username
+        };
         const userValidator = AuthenticationController._getUserValidator();
         const userValidationResult = userValidator.validate(newUserData);
         // don't continue if error
@@ -121,19 +132,96 @@ export class AuthenticationController {
             const newLocalCredentialsData = {
                 user: savedUser,
                 salt: salt,
-                hash: hash
+                hash: hash,
             }
             const savedLocalCredentials = await entityManager.save(new LocalCredentials(newLocalCredentialsData));
-        })
+        });
         return res.json(savedUser);
     }
 
-    public static async login(req: Express.Request, res: Express.Response, next: Express.NextFunction){ 
-        if(req.user) {
-            res.json(req.user);
-        } else {
-            res.send('failed to login...');
+    private static _isDataValidForLogin(data: any) : data is {username: string, password: string} {
+        if(data && "username" in data
+            && typeof (data.username) ==="string" 
+            && "password" in data
+            && typeof (data.password) ==="string") return true;
+        else return false;
+    }
+
+    /**
+     * generates unique refresh and bearer tokens
+     */
+    private static async _generateTokens(): Promise<{refreshToken: Buffer,accessToken: Buffer}> {
+        const refreshTokenRepo = getRefreshTokenRepository();
+        const accessTokenRepo = getAccessTokenRepository();
+
+        let refreshToken = crypto.randomBytes(32);
+        while((await refreshTokenRepo.findBy({token: refreshToken})).length > 0) {
+            refreshToken = crypto.randomBytes(32);
         }
+
+        let accessToken = crypto.randomBytes(32);
+        while((await accessTokenRepo.findBy({token: accessToken})).length > 0) {
+            accessToken = crypto.randomBytes(32);
+        }
+
+        return {
+            refreshToken: refreshToken,
+            accessToken: accessToken
+        };
+    }
+
+    private static async _deleteExistingTokens(ForUser: IUser) : Promise<void>{
+        const refreshTokenRepo = getRefreshTokenRepository();
+        const accessTokenRepo = getAccessTokenRepository();
+
+        const accessTokenDeleteResult = await accessTokenRepo.delete({user: ForUser});
+        const refreshTokenDeleteResult = await refreshTokenRepo.delete({user: ForUser});
+        // console.log(accessTokenDeleteResult);
+        // console.log(refreshTokenDeleteResult);
+    }
+
+    public static async login(req: Express.Request, res: Express.Response, next: Express.NextFunction){ 
+        if(!AuthenticationController._isDataValidForLogin(req.body)) return res.status(400).send('username and password should be a string');
+
+        const { username, password} = req.body;
+        try {
+            // search for credentials with corresponding user name
+            const {err, user} = await AuthenticationController._verifyBasicCredentialsAndGetUser(username, password);
+            if (err) return res.status(401).send(err);
+
+            // delete existing tokens
+            await AuthenticationController._deleteExistingTokens(user);
+
+            // generate  tokens
+            const tokens = await AuthenticationController._generateTokens();
+            const newRefreshTokenCreds = new RefreshTokenCredentials({
+                user: user,
+                token: tokens.refreshToken,
+                expiryDate: dateAdd(new Date(), 'hour', 1)
+            })
+            let savedAccessTokenCreds: IAccessTokenCredential;
+            // save both refresh and bearer tokens
+            const transaction = await getMySQLDataSource().transaction(async (entityManager) => {
+                const savedRefreshTokenCreds = await entityManager.save(newRefreshTokenCreds);
+                // create localCredentials
+                const newAccessTokenCreds = new AccessTokenCredentials({
+                    user: user,
+                    token: tokens.accessToken,
+                    refreshToken: savedRefreshTokenCreds,
+                    expiryDate: dateAdd(new Date(), 'day', 14)
+                });
+                savedAccessTokenCreds = await entityManager.save(newAccessTokenCreds);
+            });
+
+            return res.json({
+                tokenType: "bearer",
+                accessToken: savedAccessTokenCreds.token.toString('base64'),
+                expiryDate: savedAccessTokenCreds.expiryDate.getTime(),
+                refreshToken: savedAccessTokenCreds.refreshToken.token.toString('base64')
+            });
+        } catch (error) {
+            return next(`Something went wrong\n${error}`);
+        }   
     }
 
     public static async testGoogleLogin(req: Express.Request, res: Express.Response, next: Express.NextFunction) {

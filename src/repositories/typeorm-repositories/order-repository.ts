@@ -2,8 +2,6 @@ import { DataSource, Repository } from "typeorm";
 import { IOrder } from "../../entities/interfaces";
 import { Order } from "../../entities/typeorm-entities/order";
 import { IOrderRepository } from "../interfaces";
-import { getMySQLDataSource } from "./data-sources";
-import { TypeORMRepository } from "./typeorm-repository";
 
 /** @deprecated */
 export class OrderRepository implements IOrderRepository {
@@ -23,6 +21,9 @@ export class OrderRepository implements IOrderRepository {
     constructor(dataSource : DataSource) {
         this._dataSource = dataSource;
         this._repo = dataSource.getRepository(Order);
+    }
+    findBy(options?: any): Promise<IOrder[]> {
+        throw new Error("Method not implemented.");
     }
     delete(options?: any): Promise<any> {
         throw new Error("Method not implemented.");

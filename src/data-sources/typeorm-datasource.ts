@@ -1,8 +1,10 @@
 import { DataSource } from "typeorm";
-import { Order } from "../../entities/typeorm-entities/order";
+import { Order } from "../entities/typeorm-entities/order";
 import  dotenv  from "dotenv";
-import { User } from "../../entities/typeorm-entities/user";
-import { LocalCredentials } from "../../entities/typeorm-entities/local-credentials";
+import { User } from "../entities/typeorm-entities/user";
+import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
+import { AccessTokenCredentials } from "../entities/typeorm-entities/bearer-token-credentials";
+import { RefreshTokenCredentials } from "../entities/typeorm-entities/refresh-token-credentials";
 
 let _dataSource : DataSource = null;
 
@@ -10,11 +12,11 @@ let _dataSource : DataSource = null;
  * Use only once initializeDataSource() has been called
  * @returns initialized data source
  */
-export function getMySQLDataSource() : DataSource {
+export default function getMySQLDataSource() : DataSource {
     return _dataSource
 }
 
-export function buildMySQLDataSource() : DataSource {
+function buildMySQLDataSource() : DataSource {
     dotenv.config();
     return new DataSource({
         type: "mysql",
@@ -25,14 +27,14 @@ export function buildMySQLDataSource() : DataSource {
         database: process.env.MYSQL_DB,
         synchronize: true,
         logging: false,
-        entities: [Order, User, LocalCredentials],
+        entities: [Order, User, LocalCredentials, AccessTokenCredentials, RefreshTokenCredentials],
         subscribers: [],
         migrations: [],
         // dropSchema:true
     });
 }
 
-export async function buildAndInitializeMySQLDataSource() : Promise<DataSource> {
+async function buildAndInitializeMySQLDataSource() : Promise<DataSource> {
     const newDataSource = buildMySQLDataSource();
     return newDataSource.initialize();
 }

@@ -4,7 +4,7 @@ import CookieParser from 'cookie-parser';
 import createError from 'http-errors';
 import "reflect-metadata";
 import { orderRouter } from './routes/api-v1/order-router';
-import { initializeDataSource } from './repositories/typeorm-repositories/data-sources';
+import { initializeDataSource } from './data-sources/typeorm-datasource';
 import passport, { Passport } from 'passport';
 import { AuthenticationController } from './auth/auth';
 import { authRouter } from './routes/api-v1/auth-router';
