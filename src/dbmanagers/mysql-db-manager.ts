@@ -62,14 +62,14 @@ export class MySQLDBManager implements IDBManager{
 let _dbManager : IDBManager = null;
 
 export function getDBManager(){
-    dotenv.config()
+    dotenv.config();
     if(_dbManager === null) {
         _dbManager = new MySQLDBManager({
             host:'localhost',
             port : Number.parseInt(process.env.MYSQL_PORT),
             user     : process.env.MYSQL_USER,
             password : process.env.MYSQL_PASS
-        })
-    };
+        });
+    }
     return _dbManager;
 }

@@ -8,7 +8,7 @@ export class TypeORMRepository<T extends RootEntity> implements IRepository<T>{
         return this._dataSource;
     }
 
-    private _repo : Repository<T>
+    private _repo : Repository<T>;
     get repo() : Repository<T> {
         return this._repo;
     }

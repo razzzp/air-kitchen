@@ -1,5 +1,5 @@
 
-import  express from "express"
+import  express from "express";
 import passport from "passport";
 import { AuthenticationController } from "../../auth/auth";
 import { wrapFuncInTryCatch } from "../utils";

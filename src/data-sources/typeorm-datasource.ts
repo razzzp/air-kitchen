@@ -13,7 +13,7 @@ let _dataSource : DataSource = null;
  * @returns initialized data source
  */
 export default function getMySQLDataSource() : DataSource {
-    return _dataSource
+    return _dataSource;
 }
 
 function buildMySQLDataSource() : DataSource {

@@ -9,8 +9,8 @@
  * @param units  Number of units of the given interval to add.
  */
 export function dateAdd(date: Date, interval: string, units: number) {
-    var ret = new Date(date); //don't change original date
-    var checkRollover = function() { if(ret.getDate() != date.getDate()) ret.setDate(0);};
+    let ret = new Date(date); //don't change original date
+    const checkRollover = function() { if(ret.getDate() != date.getDate()) ret.setDate(0);};
     switch(String(interval).toLowerCase()) {
       case 'year'   :  ret.setFullYear(ret.getFullYear() + units); checkRollover();  break;
       case 'quarter':  ret.setMonth(ret.getMonth() + 3*units); checkRollover();  break;

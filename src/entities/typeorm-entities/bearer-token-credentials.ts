@@ -6,7 +6,7 @@ import { User } from "./user";
 
 @Entity()
 export class AccessTokenCredentials extends RootEntity implements IAccessTokenCredential {
-    @ManyToOne(()=>User)
+    @ManyToOne(()=>User,{eager:true})
     public user: User;
 
     @Index({unique: true})
@@ -17,7 +17,7 @@ export class AccessTokenCredentials extends RootEntity implements IAccessTokenCr
     public token: Buffer;
 
     @ManyToOne(()=>RefreshTokenCredentials)
-    public refreshToken: RefreshTokenCredentials
+    public refreshToken: RefreshTokenCredentials;
 
     @Column({
         type: "datetime",

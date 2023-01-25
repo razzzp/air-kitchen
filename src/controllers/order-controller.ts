@@ -3,7 +3,7 @@ import { Order } from "../entities/typeorm-entities/order";
 import { getOrderRepository } from "../repositories/typeorm-repositories/repositories";
 import { IValidator } from "../validators/ivalidator";
 import { OrderPostValidator, OrderPutValidator } from "../validators/joi/order-validator";
-import { IOrder, EOrderStatus, IUser } from "../entities/interfaces"
+import { IOrder, EOrderStatus, IUser } from "../entities/interfaces";
 import { IsNull } from "typeorm";
 import { isValidId } from "../validators/joi/id-validator";
 
@@ -17,7 +17,7 @@ export class OrderController {
     }
 
     protected static _priceToDisplay(priceString: bigint) {
-        return `\$${BigInt(priceString) / BigInt(100)}.${(BigInt(priceString) % BigInt(100)).toString().padStart(2,'0')} `
+        return `$${BigInt(priceString) / BigInt(100)}.${(BigInt(priceString) % BigInt(100)).toString().padStart(2,'0')}`;
     }
 
     protected static _isInstanceOfIOrder(object: any) : object is IOrder {
@@ -66,7 +66,7 @@ export class OrderController {
             relations: {creator: true},
             where: {id: orderId}
         });
-        if (!retrievedOrder) return res.status(404).send('Order doesn\'t exist')
+        if (!retrievedOrder) return res.status(404).send('Order doesn\'t exist');
 
         // set order entity in request object
         req.orderEntity = retrievedOrder;
@@ -113,13 +113,13 @@ export class OrderController {
                 where:{
                     creator:{id: (<any>req.user).id}
                 }
-            }
+            };
         } else {
             queryOptions = {
                 where:{
                     creator: IsNull()
                 }
-            }
+            };
         }
         const queryResults = await orderRepo.find(queryOptions);
         const viewResults = queryResults.map((curOrder)=> {

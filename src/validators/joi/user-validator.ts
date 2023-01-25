@@ -1,5 +1,5 @@
 import { IValidator, TValidationResult } from "../ivalidator";
-import joi from "joi"
+import joi from "joi";
 
 export class UserValidator implements IValidator{
     private _joiOrderValidator : joi.Schema;
@@ -25,7 +25,7 @@ export class UserValidator implements IValidator{
             error: joiResult.error,
             warning: joiResult.warning,
             value: joiResult.value,
-        }
+        };
         return result;
     }
 }

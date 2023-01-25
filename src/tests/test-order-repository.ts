@@ -3,7 +3,7 @@ import getMySQLDataSource from "../data-sources/typeorm-datasource";
 import { IOrderRepository } from "../repositories/interfaces";
 import { OrderRepository } from "../repositories/typeorm-repositories/order-repository";
 
-async function buildOrderRepo(dropTable : boolean = false) : Promise<OrderRepository> {
+async function buildOrderRepo(dropTable = false) : Promise<OrderRepository> {
     const dataSource = getMySQLDataSource();
     await dataSource.initialize();
     await dataSource.synchronize(dropTable);
@@ -18,7 +18,7 @@ async function testSave(orderRepo : IOrderRepository) {
     newOrder.description = 'this is a test description for order 1\n test123';
     newOrder.dueDate = new Date(2023, 1, 1);
     
-    let insertedOrder = await orderRepo.save(newOrder);
+    const insertedOrder = await orderRepo.save(newOrder);
     console.log(insertedOrder);
 }
 

@@ -7,7 +7,7 @@ import { User } from "./user";
 @Entity()
 export class LocalCredentials extends RootEntity implements ILocalCredentials{
 
-    @ManyToOne(()=>User)
+    @ManyToOne(()=>User,{eager:true})
     public user: User;
 
     @Column({

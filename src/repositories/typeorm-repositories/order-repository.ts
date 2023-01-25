@@ -11,7 +11,7 @@ export class OrderRepository implements IOrderRepository {
         return this._dataSource;
     }
 
-    private _repo : Repository<Order>
+    private _repo : Repository<Order>;
     get repo() : Repository<Order> {
         return this._repo;
     }

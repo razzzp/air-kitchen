@@ -7,28 +7,22 @@ import { LocalCredentials } from "../entities/typeorm-entities/local-credentials
 import { LocalCredentialsValidator } from "../validators/joi/local-credential-validator";
 import { getAccessTokenRepository, getRefreshTokenRepository, getUserRepository } from "../repositories/typeorm-repositories/repositories";
 import { IAccessTokenCredential, ILocalCredentials, IUser } from "../entities/interfaces";
-import { getLocalCredentialsRepository } from "../repositories/typeorm-repositories/repositories"
-import { BasicStrategy } from 'passport-http'
+import { getLocalCredentialsRepository } from "../repositories/typeorm-repositories/repositories";
+import { BasicStrategy } from 'passport-http';
 import { OAuth2Client } from "google-auth-library";
 import { RefreshTokenCredentials } from "../entities/typeorm-entities/refresh-token-credentials";
 import { AccessTokenCredentials } from "../entities/typeorm-entities/bearer-token-credentials";
 import { dateAdd } from "../utils/dates";
+import { Strategy as BearerStrategy } from "passport-http-bearer";
+import { MoreThan } from "typeorm";
 
-const CLIENT_ID = '325790205622-r4pns2qk3lni19mrud8pvlp69dc3q4ea.apps.googleusercontent.com'
+const CLIENT_ID = '325790205622-r4pns2qk3lni19mrud8pvlp69dc3q4ea.apps.googleusercontent.com';
+
 
 export class AuthenticationController {
     private static async _getCredentials(username :string) : Promise<ILocalCredentials> {
-        const localCredentialsRepo = getLocalCredentialsRepository()
-        const foundCreds = await localCredentialsRepo.repo.find({
-            relations: {
-                user: true
-            },
-            where :{
-                user:{
-                    username:username
-                }
-            }
-        });
+        const localCredentialsRepo = getLocalCredentialsRepository();
+        const foundCreds = await localCredentialsRepo.repo.findBy({user:{username:username}});
         return foundCreds.length>0 ? foundCreds[0] : null;
     }
 
@@ -53,27 +47,49 @@ export class AuthenticationController {
         }
     }
 
-    public static async verifyBasicStrategy(
+    private static async _verifyBasicStrategy(
         username: string,
         password: string,
-        done: (error: any, user?: any) => void,) {
-            // wrap in try catch to prevent crashing
-            try {
-                // search for credentials with corresponding user name
-                const {err, user} = await AuthenticationController._verifyBasicCredentialsAndGetUser(username, password);
-                if (err) return done('Wrong username/password', false)
-                else return done(null, user);
-            } catch (error) {
-                return done(`Something went wrong\n${error}`, false);
-            }     
+        done: (error: any, user?: any) => void
+    ) {
+        // wrap in try catch to prevent crashing
+        try {
+            // search for credentials with corresponding user name
+            const {err, user} = await AuthenticationController._verifyBasicCredentialsAndGetUser(username, password);
+            if (err) return done('Wrong username/password', false);
+            else return done(null, user);
+        } catch (error) {
+            return done(`Something went wrong\n${error}`, false);
+        }     
+    }
+
+    private static async _verifyBearerStrategy(
+        token: string,
+        done: (error: any, user?: any) => void
+    ) {
+        if (token === '') return done('Empty token', false);
+
+        const tokenAsBuffer = Buffer.from(token, 'base64');
+        const accessTokenRepo = getAccessTokenRepository();
+        // searchs creds with matching tokens that is not expired
+        try {
+            const foundCreds = await accessTokenRepo.findOneBy({token: tokenAsBuffer, expiryDate: MoreThan(new Date())});
+            if (foundCreds) {
+                done(null, foundCreds.user);
+            } else {
+                done('Invalid token', false);
+            }
+        } catch (e) {
+            done(e, false);
+        } 
     }
 
     private static _getUserValidator() {
-        return new UserValidator()
+        return new UserValidator();
     }
 
     private static _getLocalCredentialsValidator() {
-        return new LocalCredentialsValidator()
+        return new LocalCredentialsValidator();
     }
 
     private static async _isEmailUnique(email : string){
@@ -121,7 +137,7 @@ export class AuthenticationController {
         //  using 16 bytes salt
         //  310,000 iterations,
         //  sha-256
-        const salt = crypto.randomBytes(16)
+        const salt = crypto.randomBytes(16);
         const hash = AuthenticationController._calculateHash(password, salt);
         
         let savedUser = null;
@@ -133,7 +149,7 @@ export class AuthenticationController {
                 user: savedUser,
                 salt: salt,
                 hash: hash,
-            }
+            };
             const savedLocalCredentials = await entityManager.save(new LocalCredentials(newLocalCredentialsData));
         });
         return res.json(savedUser);
@@ -198,7 +214,7 @@ export class AuthenticationController {
                 user: user,
                 token: tokens.refreshToken,
                 expiryDate: dateAdd(new Date(), 'hour', 1)
-            })
+            });
             let savedAccessTokenCreds: IAccessTokenCredential;
             // save both refresh and bearer tokens
             const transaction = await getMySQLDataSource().transaction(async (entityManager) => {
@@ -238,7 +254,7 @@ export class AuthenticationController {
             const userid = payload ? payload['sub'] : null;
             // If request specified a G Suite domain:
             // const domain = payload['hd'];
-            console.log(payload)
+            console.log(payload);
             return res.send(payload);
         } catch (e) {
             console.error(e);
@@ -247,6 +263,10 @@ export class AuthenticationController {
     }
     
     public static getBasicStrategy(){
-        return new BasicStrategy(AuthenticationController.verifyBasicStrategy)
+        return new BasicStrategy(AuthenticationController._verifyBasicStrategy);
+    }
+
+    public static getBearerStrategy(){
+        return new BearerStrategy(AuthenticationController._verifyBearerStrategy);
     }
 }

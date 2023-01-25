@@ -9,5 +9,5 @@ export const isValidId = (id: any) : id is number => {
     //  if no error it is a valid id
     const valResult = getIdValidator().validate(id);
     return !(valResult.error) ;
-}
+};
 

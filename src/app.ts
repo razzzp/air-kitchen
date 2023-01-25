@@ -1,11 +1,10 @@
 import Express from 'express';
 import Path from 'path';
-import CookieParser from 'cookie-parser';
 import createError from 'http-errors';
-import "reflect-metadata";
+import 'reflect-metadata';
 import { orderRouter } from './routes/api-v1/order-router';
 import { initializeDataSource } from './data-sources/typeorm-datasource';
-import passport, { Passport } from 'passport';
+import passport from 'passport';
 import { AuthenticationController } from './auth/auth';
 import { authRouter } from './routes/api-v1/auth-router';
 import { userRouter } from './routes/api-v1/user-routers';
@@ -33,7 +32,8 @@ app.use(Express.static(Path.join(process.cwd(), 'public')));
 
 
 //auth
-passport.use(AuthenticationController.getBasicStrategy())
+passport.use(AuthenticationController.getBasicStrategy());
+passport.use(AuthenticationController.getBearerStrategy());
 //passport.use(new AnonymousStrategy());
 
 // routes

@@ -5,7 +5,7 @@ import { User } from "./user";
 
 @Entity()
 export class RefreshTokenCredentials extends RootEntity implements IRefreshTokenCredential {
-    @ManyToOne(()=>User)
+    @ManyToOne(()=>User,{eager:true})
     public user: User;
 
     @Index({unique: true})

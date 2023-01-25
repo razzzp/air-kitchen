@@ -19,7 +19,7 @@ export class LocalCredentialsValidator implements IValidator{
             error: joiResult.error,
             warning: joiResult.warning,
             value: joiResult.value,
-        }
+        };
         return result;
     }
 }

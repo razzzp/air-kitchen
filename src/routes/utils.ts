@@ -1,5 +1,5 @@
 
-import Express from "express"
+import Express from "express";
 
 /**
  * Returns function where given function is called in try catch block.
@@ -16,5 +16,5 @@ export function wrapFuncInTryCatch(
             } catch(e) {
                 next(e);
             }
-        }
+        };
 }

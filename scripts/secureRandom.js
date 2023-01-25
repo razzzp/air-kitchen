@@ -1,2 +1,2 @@
-const cypto = require('crypto');
+import 'crypto';
 

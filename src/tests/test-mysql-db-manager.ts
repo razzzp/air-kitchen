@@ -11,7 +11,7 @@ async function testConnect() {
     assert(connection !== null || connection !== undefined, 'failed to connect');
     console.log('connected: ', connection);
     connection.end();
-    console.log('connection closed.')
+    console.log('connection closed.');
 }
 
 testConnect()

@@ -24,7 +24,7 @@ export class OrderPartialValidator implements IValidator{
             error: joiResult.error,
             warning: joiResult.warning,
             value: joiResult.value,
-        }
+        };
         return result;
     }
 }
@@ -47,7 +47,7 @@ export class OrderPostValidator extends OrderPartialValidator{
             status: base.extract('status').default(0),
             dueDate: base.extract('dueDate').default(null),
             salePrice: base.extract('salePrice').default('0')        
-        })
+        });
     }
 }
 
@@ -64,6 +64,6 @@ export class OrderPutValidator extends OrderPartialValidator{
             id: getIdValidator(),
             creator: Joi.any().forbidden(),
             creationDate: Joi.any().forbidden()
-        })
+        });
     }
 }
