@@ -1,6 +1,5 @@
 
 import  express from "express";
-import passport from "passport";
 import { AuthenticationController } from "../../auth/auth";
 import { wrapFuncInTryCatch } from "../utils";
 
@@ -15,6 +14,11 @@ authRouter.route('/register')
 authRouter.route('/login')
     .post(
         wrapFuncInTryCatch(AuthenticationController.login)
+    );
+
+authRouter.route('/login/refresh-token')
+    .post(
+        wrapFuncInTryCatch(AuthenticationController.refreshToken)
     );
 
 authRouter.route('/login-google')

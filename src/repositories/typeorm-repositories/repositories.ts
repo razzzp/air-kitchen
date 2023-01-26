@@ -5,7 +5,7 @@ import { User } from "../../entities/typeorm-entities/user";
 import { IRepository } from "../interfaces";
 import getMySQLDataSource from "../../data-sources/typeorm-datasource";
 import { TypeORMRepository } from "./typeorm-repository";
-import { AccessTokenCredentials } from "../../entities/typeorm-entities/bearer-token-credentials";
+import { AccessTokenCredentials } from "../../entities/typeorm-entities/access-token-credentials";
 import { RefreshTokenCredentials } from "../../entities/typeorm-entities/refresh-token-credentials";
 
 export function getLocalCredentialsRepository() : TypeORMRepository<LocalCredentials> {

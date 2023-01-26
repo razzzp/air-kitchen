@@ -34,15 +34,17 @@ export interface ILocalCredentials extends IEntity {
     expiryDate?: Date,
 }
 
-export interface IAccessTokenCredential extends IEntity {
+
+export interface ITokenCredential extends IEntity {
     user: IUser,
     token: Buffer,
-    refreshToken: IRefreshTokenCredential
     expiryDate: Date
 }
 
-export interface IRefreshTokenCredential extends IEntity {
-    user: IUser,
-    token: Buffer,
-    expiryDate: Date
+export interface IAccessTokenCredential extends ITokenCredential {
+    refreshToken: IRefreshTokenCredential
 }
+
+export interface IRefreshTokenCredential extends ITokenCredential {
+}
+

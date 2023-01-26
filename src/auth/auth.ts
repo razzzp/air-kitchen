@@ -6,15 +6,16 @@ import { User } from "../entities/typeorm-entities/user";
 import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
 import { LocalCredentialsValidator } from "../validators/joi/local-credential-validator";
 import { getAccessTokenRepository, getRefreshTokenRepository, getUserRepository } from "../repositories/typeorm-repositories/repositories";
-import { IAccessTokenCredential, ILocalCredentials, IUser } from "../entities/interfaces";
+import { IAccessTokenCredential, ILocalCredentials, ITokenCredential, IUser } from "../entities/interfaces";
 import { getLocalCredentialsRepository } from "../repositories/typeorm-repositories/repositories";
 import { BasicStrategy } from 'passport-http';
 import { OAuth2Client } from "google-auth-library";
 import { RefreshTokenCredentials } from "../entities/typeorm-entities/refresh-token-credentials";
-import { AccessTokenCredentials } from "../entities/typeorm-entities/bearer-token-credentials";
+import { AccessTokenCredentials } from "../entities/typeorm-entities/access-token-credentials";
 import { dateAdd } from "../utils/dates";
 import { Strategy as BearerStrategy } from "passport-http-bearer";
 import { MoreThan } from "typeorm";
+import { IRepository } from "../repositories/interfaces";
 
 const CLIENT_ID = '325790205622-r4pns2qk3lni19mrud8pvlp69dc3q4ea.apps.googleusercontent.com';
 
@@ -73,11 +74,14 @@ export class AuthenticationController {
         const accessTokenRepo = getAccessTokenRepository();
         // searchs creds with matching tokens that is not expired
         try {
-            const foundCreds = await accessTokenRepo.findOneBy({token: tokenAsBuffer, expiryDate: MoreThan(new Date())});
+            const foundCreds = await accessTokenRepo.findOneBy({
+                token: tokenAsBuffer, 
+                expiryDate: MoreThan(new Date())
+            });
             if (foundCreds) {
                 done(null, foundCreds.user);
             } else {
-                done('Invalid token', false);
+                done('Unauthorized', false);
             }
         } catch (e) {
             done(e, false);
@@ -125,34 +129,39 @@ export class AuthenticationController {
         }
         // should be safe todo
         const validatedUser = <IUser>(userValidationResult.value);
-        // check email doesn't exist
-        if (!(await AuthenticationController._isEmailUnique(validatedUser.email))){
-            return next("Email already exists");
+
+        try {
+            // check email doesn't exist
+            if (!(await AuthenticationController._isEmailUnique(validatedUser.email))){
+                return next("Email already exists");
+            }
+            // check username doesn't exist
+            if (!(await AuthenticationController._isUsernameUnique(validatedUser.username))){
+                return next("Username already exists");
+            }
+            // generate 32 byte hash using pbkdf2'
+            //  using 16 bytes salt
+            //  310,000 iterations,
+            //  sha-256
+            const salt = crypto.randomBytes(16);
+            const hash = AuthenticationController._calculateHash(password, salt);
+            
+            let savedUser = null;
+            // use transaction to save the user and credentials
+            const transaction = await getMySQLDataSource().transaction(async (entityManager) => {
+                savedUser = await entityManager.save(new User(validatedUser));
+                // create localCredentials
+                const newLocalCredentialsData = {
+                    user: savedUser,
+                    salt: salt,
+                    hash: hash,
+                };
+                const savedLocalCredentials = await entityManager.save(new LocalCredentials(newLocalCredentialsData));
+            });
+            return res.json(savedUser);
+        } catch (error) {
+            return next(`Something went wrong\n${error}`);
         }
-        // check username doesn't exist
-        if (!(await AuthenticationController._isUsernameUnique(validatedUser.username))){
-            return next("Username already exists");
-        }
-        // generate 32 byte hash using pbkdf2'
-        //  using 16 bytes salt
-        //  310,000 iterations,
-        //  sha-256
-        const salt = crypto.randomBytes(16);
-        const hash = AuthenticationController._calculateHash(password, salt);
-        
-        let savedUser = null;
-        // use transaction to save the user and credentials
-        const transaction = await getMySQLDataSource().transaction(async (entityManager) => {
-            savedUser = await entityManager.save(new User(validatedUser));
-            // create localCredentials
-            const newLocalCredentialsData = {
-                user: savedUser,
-                salt: salt,
-                hash: hash,
-            };
-            const savedLocalCredentials = await entityManager.save(new LocalCredentials(newLocalCredentialsData));
-        });
-        return res.json(savedUser);
     }
 
     private static _isDataValidForLogin(data: any) : data is {username: string, password: string} {
@@ -164,21 +173,27 @@ export class AuthenticationController {
     }
 
     /**
+     * 
+     * @param ForTokenRepo Token credential repo
+     * @returns generated token that is unique in the given repo
+     */
+    private static async _generateTokenForRepo<T extends ITokenCredential>(ForTokenRepo: IRepository<T>): Promise<Buffer> {
+        let accessToken = crypto.randomBytes(32);
+        while((await ForTokenRepo.findBy({token: accessToken})).length > 0) {
+            accessToken = crypto.randomBytes(32);
+        }
+        return accessToken;
+    }
+
+    /**
      * generates unique refresh and bearer tokens
      */
     private static async _generateTokens(): Promise<{refreshToken: Buffer,accessToken: Buffer}> {
         const refreshTokenRepo = getRefreshTokenRepository();
         const accessTokenRepo = getAccessTokenRepository();
 
-        let refreshToken = crypto.randomBytes(32);
-        while((await refreshTokenRepo.findBy({token: refreshToken})).length > 0) {
-            refreshToken = crypto.randomBytes(32);
-        }
-
-        let accessToken = crypto.randomBytes(32);
-        while((await accessTokenRepo.findBy({token: accessToken})).length > 0) {
-            accessToken = crypto.randomBytes(32);
-        }
+        const refreshToken = await AuthenticationController._generateTokenForRepo<RefreshTokenCredentials>(refreshTokenRepo);
+        const accessToken = await AuthenticationController._generateTokenForRepo<AccessTokenCredentials>(accessTokenRepo);
 
         return {
             refreshToken: refreshToken,
@@ -213,7 +228,7 @@ export class AuthenticationController {
             const newRefreshTokenCreds = new RefreshTokenCredentials({
                 user: user,
                 token: tokens.refreshToken,
-                expiryDate: dateAdd(new Date(), 'hour', 1)
+                expiryDate: dateAdd(new Date(), 'day', 14)
             });
             let savedAccessTokenCreds: IAccessTokenCredential;
             // save both refresh and bearer tokens
@@ -224,7 +239,7 @@ export class AuthenticationController {
                     user: user,
                     token: tokens.accessToken,
                     refreshToken: savedRefreshTokenCreds,
-                    expiryDate: dateAdd(new Date(), 'day', 14)
+                    expiryDate: dateAdd(new Date(), 'hour', 1)
                 });
                 savedAccessTokenCreds = await entityManager.save(newAccessTokenCreds);
             });
@@ -238,6 +253,46 @@ export class AuthenticationController {
         } catch (error) {
             return next(`Something went wrong\n${error}`);
         }   
+    }
+
+    public static async refreshToken(req: Express.Request, res: Express.Response, next: Express.NextFunction){ 
+        const { refreshToken } = req.body;
+        if (!refreshToken || typeof refreshToken !== 'string' || refreshToken === '') 
+            return res.status(401).send('Invalid token');
+        
+        try {
+            // check if the refresh token in valid
+            const tokenAsBuffer = Buffer.from(refreshToken, 'base64');
+            const refreshTokenRepo = getRefreshTokenRepository();
+            const foundRefTokenCreds = await refreshTokenRepo.findOneBy({
+                token: tokenAsBuffer,
+                expiryDate: MoreThan(new Date())
+            });
+
+            if (foundRefTokenCreds) {
+                // generate and save new access tokens
+                const accessTokenRepo = getAccessTokenRepository();
+                const newAccessToken = await AuthenticationController._generateTokenForRepo<AccessTokenCredentials>(accessTokenRepo);
+                const newAccTokenCreds = {
+                    user: foundRefTokenCreds.user,
+                    token: newAccessToken,
+                    expiryDate: dateAdd(new Date(), 'hour', 1),
+                    refreshToken: foundRefTokenCreds
+                };
+                const savedAccTokenCreds = await accessTokenRepo.save(newAccTokenCreds);
+                
+                return res.json({
+                    user: savedAccTokenCreds.user.id,
+                    token: savedAccTokenCreds.token.toString('base64'),
+                    expiryDate: savedAccTokenCreds.expiryDate
+                });
+            } else {
+                return res.status(401).send('Invalid token');
+            }
+        } catch (error) {
+            return next(`Something went wrong\n${error}`);
+        }
+        
     }
 
     public static async testGoogleLogin(req: Express.Request, res: Express.Response, next: Express.NextFunction) {

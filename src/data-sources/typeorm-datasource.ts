@@ -3,7 +3,7 @@ import { Order } from "../entities/typeorm-entities/order";
 import  dotenv  from "dotenv";
 import { User } from "../entities/typeorm-entities/user";
 import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
-import { AccessTokenCredentials } from "../entities/typeorm-entities/bearer-token-credentials";
+import { AccessTokenCredentials } from "../entities/typeorm-entities/access-token-credentials";
 import { RefreshTokenCredentials } from "../entities/typeorm-entities/refresh-token-credentials";
 
 let _dataSource : DataSource = null;
