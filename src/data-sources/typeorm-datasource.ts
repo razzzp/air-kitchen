@@ -5,6 +5,7 @@ import { User } from "../entities/typeorm-entities/user";
 import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
 import { AccessTokenCredentials } from "../entities/typeorm-entities/access-token-credentials";
 import { RefreshTokenCredentials } from "../entities/typeorm-entities/refresh-token-credentials";
+import FederatedCredentials from "../entities/typeorm-entities/federated-credentials";
 
 let _dataSource : DataSource = null;
 
@@ -27,7 +28,7 @@ function buildMySQLDataSource() : DataSource {
         database: process.env.MYSQL_DB,
         synchronize: true,
         logging: false,
-        entities: [Order, User, LocalCredentials, AccessTokenCredentials, RefreshTokenCredentials],
+        entities: [Order, User, LocalCredentials, AccessTokenCredentials, RefreshTokenCredentials, FederatedCredentials],
         subscribers: [],
         migrations: [],
         // dropSchema:true

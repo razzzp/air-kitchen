@@ -1,25 +1,17 @@
-import { IValidator, TValidationResult } from "../ivalidator";
-import joi from "joi";
 
-export class LocalCredentialsValidator implements IValidator{
-    private _joiLocalCredentialsValidator : joi.Schema;
+import joi from "joi";
+import { ILocalCredentials } from "../../entities/interfaces";
+import { JoiValidator } from "./joi-validator";
+
+export class LocalCredentialsValidator extends JoiValidator<ILocalCredentials>{
 
     /**
      *
      */
     constructor() {
-        this._joiLocalCredentialsValidator =  joi.object().keys({
+        super();
+        this._joiValidator =  joi.object().keys({
             password: joi.string().min(6).required(),
         });
-    }
-
-    public validate(data: any): TValidationResult {
-        const joiResult = this._joiLocalCredentialsValidator.validate(data);
-        const result = {
-            error: joiResult.error,
-            warning: joiResult.warning,
-            value: joiResult.value,
-        };
-        return result;
     }
 }

@@ -1,5 +1,5 @@
 import { Column, Entity } from "typeorm";
-import { IUser } from "../interfaces";
+import { EUserStatus, IUser } from "../interfaces";
 import { RootEntity } from "./root-entity";
 
 @Entity()
@@ -18,18 +18,28 @@ export class User extends RootEntity implements IUser {
     @Column({
         type: "varchar",
         length: 254,
+        nullable: false
     })
     public email: string;
 
     @Column({
         type: "varchar",
         length: 64,
+        default: null
     })
-    public username : string
+    public username : string;
 
     @Column({
         type: "varchar",
         length: 64,
+        default: null
     })
-    public displayName? : string
+    public displayName? : string;
+
+    @Column({
+        type : "enum",
+        enum : EUserStatus,
+        default : EUserStatus.Active
+    })
+    public status: EUserStatus;
 }

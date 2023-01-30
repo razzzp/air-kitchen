@@ -12,7 +12,7 @@ export function wrapFuncInTryCatch(
     ) : (req:Express.Request, res: Express.Response, next: Express.NextFunction) => any {
         return  async (req:Express.Request, res: Express.Response, next: Express.NextFunction) => {
             try{
-                func(req, res, next);
+                await func(req, res, next);
             } catch(e) {
                 next(e);
             }

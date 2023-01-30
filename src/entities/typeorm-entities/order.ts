@@ -25,7 +25,8 @@ export class Order extends RootEntity implements IOrder{
     
     @Column({
         type : "varchar",
-        length : 255
+        length : 255,
+        default:""
     })
     public name: string;
 
@@ -34,7 +35,7 @@ export class Order extends RootEntity implements IOrder{
         length : 1000,
         default: "",
     })
-    public description : string
+    public description : string;
 
     @Column({
         type : "enum",

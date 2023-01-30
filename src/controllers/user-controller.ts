@@ -6,12 +6,8 @@ import { User } from "../entities/typeorm-entities/user";
 import { IUser } from "../entities/interfaces";
 
 export class UserController {
-    protected static _getNewValidator(): IValidator{
+    protected static _getNewValidator(): IValidator<IUser>{
         return new UserValidator();
-    }
-
-    protected static _buildUserEntityFromData(data: IUser) : IUser {
-        return new User(data);
     }
 
     /**
@@ -49,8 +45,7 @@ export class UserController {
         // const queryResults = orderRepo.save();
         if (!validationResult.error){
             const userRepo = getUserRepository();
-            const newUser = UserController._buildUserEntityFromData(validationResult.value);
-            const savedUser = await userRepo.save(newUser);
+            const savedUser = await userRepo.save(validationResult.value);
             return savedUser;
         } else {
             // throw new Error('something went wrong :(');

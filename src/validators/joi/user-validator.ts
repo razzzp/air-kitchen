@@ -1,8 +1,9 @@
-import { IValidator, TValidationResult } from "../ivalidator";
-import joi from "joi";
 
-export class UserValidator implements IValidator{
-    private _joiOrderValidator : joi.Schema;
+import joi from "joi";
+import { JoiValidator } from "./joi-validator";
+import { IUser } from "../../entities/interfaces";
+
+export class UserValidator extends JoiValidator<IUser>{
 
     public static getDisplayNameValidator() {
         // alphanumeric with spaces allowed except for leading and trailling spaces
@@ -12,20 +13,11 @@ export class UserValidator implements IValidator{
      *
      */
     constructor() {
-        this._joiOrderValidator =  joi.object().keys({
+        super();
+        this._joiValidator =  joi.object().keys({
             email: joi.string().max(64).required().email(),
-            username: joi.string().max(64).required().alphanum(),
+            username: joi.string().max(64).alphanum(),
             displayName: UserValidator.getDisplayNameValidator()
         });
-    }
-
-    public validate(data: any): TValidationResult {
-        const joiResult = this._joiOrderValidator.validate(data);
-        const result = {
-            error: joiResult.error,
-            warning: joiResult.warning,
-            value: joiResult.value,
-        };
-        return result;
     }
 }

@@ -1,10 +1,11 @@
+import { IEntity } from "../entities/interfaces";
 
-export type TValidationResult = {
+export type TValidationResult<T extends IEntity> = {
     error: any;
     warning?: any;
-    value: any;
+    value: T;
 }
 
-export interface IValidator {
-    validate(data : any) : TValidationResult;
+export interface IValidator<T extends IEntity> {
+    validate(data : any) : TValidationResult<T>;
 }

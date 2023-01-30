@@ -6,13 +6,17 @@ import { User } from "./user";
 
 @Entity()
 export class AccessTokenCredentials extends RootEntity implements IAccessTokenCredential {
-    @ManyToOne(()=>User,{eager:true})
+    @ManyToOne(()=>User,{
+        eager:true,
+        nullable:false,
+    })
     public user: User;
 
     @Index({unique: true})
     @Column({
         type: "varbinary",
-        length: 32
+        length: 32,
+        nullable:false,
     })
     public token: Buffer;
 
@@ -21,7 +25,7 @@ export class AccessTokenCredentials extends RootEntity implements IAccessTokenCr
 
     @Column({
         type: "datetime",
-        nullable: false
+        nullable: false,
     })
     public expiryDate: Date;
 

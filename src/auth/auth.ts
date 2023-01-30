@@ -5,8 +5,8 @@ import { UserValidator } from "../validators/joi/user-validator";
 import { User } from "../entities/typeorm-entities/user";
 import { LocalCredentials } from "../entities/typeorm-entities/local-credentials";
 import { LocalCredentialsValidator } from "../validators/joi/local-credential-validator";
-import { getAccessTokenRepository, getRefreshTokenRepository, getUserRepository } from "../repositories/typeorm-repositories/repositories";
-import { IAccessTokenCredential, ILocalCredentials, ITokenCredential, IUser } from "../entities/interfaces";
+import { getAccessTokenRepository, getFederatedCredentialsRepository, getRefreshTokenRepository, getUserRepository } from "../repositories/typeorm-repositories/repositories";
+import { IAccessTokenCredential, IFederatedCredentials, ILocalCredentials, IRefreshTokenCredential, ITokenCredential, IUser } from "../entities/interfaces";
 import { getLocalCredentialsRepository } from "../repositories/typeorm-repositories/repositories";
 import { BasicStrategy } from 'passport-http';
 import { OAuth2Client } from "google-auth-library";
@@ -16,8 +16,16 @@ import { dateAdd } from "../utils/dates";
 import { Strategy as BearerStrategy } from "passport-http-bearer";
 import { MoreThan } from "typeorm";
 import { IRepository } from "../repositories/interfaces";
+import dotenv from 'dotenv';
+import { TValidationResult } from "../validators/ivalidator";
+import { userInfo } from "os";
 
-const CLIENT_ID = '325790205622-r4pns2qk3lni19mrud8pvlp69dc3q4ea.apps.googleusercontent.com';
+
+function _getGoogleClientID(){
+    dotenv.config();
+    const clientId = process.env.GOOGLE_AUTH_CLIENT_ID;
+    return clientId;
+}
 
 
 export class AuthenticationController {
@@ -106,6 +114,12 @@ export class AuthenticationController {
         return (await userRepo.find({where:{username: username}})).length === 0;
     }
 
+    private static _validateUserData(data: any) : TValidationResult<IUser>{
+        // validate user data
+        const userValidator = AuthenticationController._getUserValidator();
+        return userValidator.validate(data);
+    }
+
     public static async register(req: Express.Request, res: Express.Response, next: Express.NextFunction){
         const {email, username, password, displayName} = req.body;
 
@@ -116,13 +130,11 @@ export class AuthenticationController {
             return next(localCredsValidationResult.error);
         }
         // validate user data
-        const newUserData = {
+        const userValidationResult =AuthenticationController._validateUserData({
             email: email,
             username: username,
             displayName: displayName ? displayName : username
-        };
-        const userValidator = AuthenticationController._getUserValidator();
-        const userValidationResult = userValidator.validate(newUserData);
+        });
         // don't continue if error
         if (userValidationResult.error){
             return next(userValidationResult.error);
@@ -211,6 +223,64 @@ export class AuthenticationController {
         // console.log(refreshTokenDeleteResult);
     }
 
+
+    /**
+     * Generates access token and refresh tokens for the user
+     *  Deletes any exisiting tokens
+     *  Returns the credential entities
+     *  Can throw promise rejection Errors
+     * @param user generates tokens for the user
+     * @returns access token and refresh token credential entities
+     */
+    private static async _createBearerCredentialsForUser(user: IUser): Promise<{
+        accessTokenCred: IAccessTokenCredential
+        refreshTokenCred: IRefreshTokenCredential
+    }> {
+        // delete existing tokens
+        await AuthenticationController._deleteExistingTokens(user);
+
+        // generate  tokens
+        const tokens = await AuthenticationController._generateTokens();
+        const newRefreshTokenCreds = new RefreshTokenCredentials({
+            user: user,
+            token: tokens.refreshToken,
+            expiryDate: dateAdd(new Date(), 'day', 14)
+        });
+        let savedAccessTokenCreds: IAccessTokenCredential;
+        let savedRefreshTokenCreds: IRefreshTokenCredential;
+        // save both refresh and bearer tokens
+        const transaction = await getMySQLDataSource().transaction(async (entityManager) => {
+            savedRefreshTokenCreds = await entityManager.save(newRefreshTokenCreds);
+            // create localCredentials
+            const newAccessTokenCreds = new AccessTokenCredentials({
+                user: user,
+                token: tokens.accessToken,
+                refreshToken: savedRefreshTokenCreds,
+                expiryDate: dateAdd(new Date(), 'hour', 1)
+            });
+            savedAccessTokenCreds = await entityManager.save(newAccessTokenCreds);
+        });
+        return {
+            accessTokenCred: savedAccessTokenCreds,
+            refreshTokenCred: savedRefreshTokenCreds
+        };
+    }
+
+    /**
+     * 
+     * @param accessTokenCred 
+     * @param refreshTokenCred 
+     * @returns bearer credential object for user, with tokens encoded
+     */
+    private static _buildViewForBearerCredentials(accessTokenCred: IAccessTokenCredential, refreshTokenCred: IRefreshTokenCredential) {
+        return {
+            tokenType: "bearer",
+            accessToken: accessTokenCred.token.toString('base64'),
+            expiryDate: accessTokenCred.expiryDate.getTime(),
+            refreshToken: refreshTokenCred.token.toString('base64')
+        };
+    }
+
     public static async login(req: Express.Request, res: Express.Response, next: Express.NextFunction){ 
         if(!AuthenticationController._isDataValidForLogin(req.body)) return res.status(400).send('username and password should be a string');
 
@@ -220,36 +290,9 @@ export class AuthenticationController {
             const {err, user} = await AuthenticationController._verifyBasicCredentialsAndGetUser(username, password);
             if (err) return res.status(401).send(err);
 
-            // delete existing tokens
-            await AuthenticationController._deleteExistingTokens(user);
+            const {accessTokenCred,refreshTokenCred} = await AuthenticationController._createBearerCredentialsForUser(user);
 
-            // generate  tokens
-            const tokens = await AuthenticationController._generateTokens();
-            const newRefreshTokenCreds = new RefreshTokenCredentials({
-                user: user,
-                token: tokens.refreshToken,
-                expiryDate: dateAdd(new Date(), 'day', 14)
-            });
-            let savedAccessTokenCreds: IAccessTokenCredential;
-            // save both refresh and bearer tokens
-            const transaction = await getMySQLDataSource().transaction(async (entityManager) => {
-                const savedRefreshTokenCreds = await entityManager.save(newRefreshTokenCreds);
-                // create localCredentials
-                const newAccessTokenCreds = new AccessTokenCredentials({
-                    user: user,
-                    token: tokens.accessToken,
-                    refreshToken: savedRefreshTokenCreds,
-                    expiryDate: dateAdd(new Date(), 'hour', 1)
-                });
-                savedAccessTokenCreds = await entityManager.save(newAccessTokenCreds);
-            });
-
-            return res.json({
-                tokenType: "bearer",
-                accessToken: savedAccessTokenCreds.token.toString('base64'),
-                expiryDate: savedAccessTokenCreds.expiryDate.getTime(),
-                refreshToken: savedAccessTokenCreds.refreshToken.token.toString('base64')
-            });
+            return res.json(AuthenticationController._buildViewForBearerCredentials(accessTokenCred,refreshTokenCred));
         } catch (error) {
             return next(`Something went wrong\n${error}`);
         }   
@@ -295,26 +338,70 @@ export class AuthenticationController {
         
     }
 
+
     public static async testGoogleLogin(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
         const data = req.body;
-        const client = new OAuth2Client(CLIENT_ID);
-        try {
-            const ticket = await client.verifyIdToken({
-                idToken: data.credential,
-                audience: CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
-                // Or, if multiple clients access the backend:
-                //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
-            });
-            const payload = ticket.getPayload();
-            const userid = payload ? payload['sub'] : null;
-            // If request specified a G Suite domain:
-            // const domain = payload['hd'];
-            console.log(payload);
-            return res.send(payload);
-        } catch (e) {
-            console.error(e);
-            return next(e);
+        if (!data.credential || typeof(data.credential) !== 'string') return next('Credential field is required and should be a string');
+        const client = new OAuth2Client(_getGoogleClientID());
+        
+        const ticket = await client.verifyIdToken({
+            idToken: data.credential,
+            audience: _getGoogleClientID(),  // Specify the CLIENT_ID of the app that accesses the backend
+            // Or, if multiple clients access the backend:
+            //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+        });
+        const payload = ticket.getPayload();
+        // If request specified a G Suite domain:
+        // const domain = payload['hd'];
+        console.log(payload);
+    
+        // if valid google account, find/create user and then generate token creds
+        //  return token creds. return user details if new user
+        if(!payload) return next('Payload is undefined');
+        // search for federated credentials
+        const fedCredsRepo = getFederatedCredentialsRepository();
+        const userRepo = getUserRepository();
+        let fedCreds = await fedCredsRepo.findOneBy({issuer: payload.iss, issuerUserId: payload.sub});
+        let user: IUser = null;
+        if(!fedCreds){
+            // If federated credentials not found:
+            //  1. Check to see if there is a User with the same email
+            //    a. If there is, take that user, and check status
+            //    b. If none found, create new user
+            //  2. Create federated credential for the user
+            
+            user = await userRepo.findOneBy({email: payload.email});
+            if (!user) {
+                // create user
+                // validate user data
+                const userValidationResult =AuthenticationController._validateUserData({
+                    email: payload.email,
+                    displayName: payload.name,
+                });
+                if (userValidationResult.error) return next(userValidationResult.error);
+                user = await userRepo.save(userValidationResult.value);
+            } 
+
+            if (!user) return next('Failed to get/create user.');
+            // Create federated credentials
+            const newFedCreds: IFederatedCredentials = {
+                user: user,
+                issuer: payload.iss,
+                issuerUserId: payload.sub
+            };
+            fedCreds = await fedCredsRepo.save(newFedCreds);   
+        } else {
+            // get user
+            user = await userRepo.findOneBy({id:fedCreds.user.id});
         }
+        // check fed cred issuerUser id is the same 
+        if (!fedCreds) return next('Failed to get/create federated credentials');
+        if (fedCreds.issuerUserId !== payload.sub) return next('Issuer user Id is inconsistent');
+
+        // if fed creds available, create and return token credentials
+        const {accessTokenCred,refreshTokenCred} = await AuthenticationController._createBearerCredentialsForUser(user);
+
+        return res.json(AuthenticationController._buildViewForBearerCredentials(accessTokenCred,refreshTokenCred));
     }
     
     public static getBasicStrategy(){

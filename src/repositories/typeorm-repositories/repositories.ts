@@ -7,6 +7,8 @@ import getMySQLDataSource from "../../data-sources/typeorm-datasource";
 import { TypeORMRepository } from "./typeorm-repository";
 import { AccessTokenCredentials } from "../../entities/typeorm-entities/access-token-credentials";
 import { RefreshTokenCredentials } from "../../entities/typeorm-entities/refresh-token-credentials";
+import FederatedCredentials from "../../entities/typeorm-entities/federated-credentials";
+
 
 export function getLocalCredentialsRepository() : TypeORMRepository<LocalCredentials> {
     const dataSource = getMySQLDataSource();
@@ -31,5 +33,10 @@ export function getAccessTokenRepository() : TypeORMRepository<AccessTokenCreden
 export function getRefreshTokenRepository() : TypeORMRepository<RefreshTokenCredentials> {
     const dataSource = getMySQLDataSource();
     return new TypeORMRepository(dataSource, RefreshTokenCredentials);
+}
+
+export function getFederatedCredentialsRepository() {
+    const dataSource = getMySQLDataSource();
+    return new TypeORMRepository(dataSource, FederatedCredentials);
 }
 

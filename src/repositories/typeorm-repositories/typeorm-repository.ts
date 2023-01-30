@@ -1,8 +1,8 @@
 import { DataSource, EntityTarget, FindManyOptions, FindOneOptions, FindOptionsWhere, Repository, SaveOptions } from "typeorm";
-import { RootEntity } from "../../entities/typeorm-entities/root-entity";
+import { IEntity } from "../../entities/interfaces";
 import { IRepository } from "../interfaces";
 
-export class TypeORMRepository<T extends RootEntity> implements IRepository<T>{
+export class TypeORMRepository<T extends IEntity> implements IRepository<T>{
     private _dataSource : DataSource;
     get dataSource() : DataSource {
         return this._dataSource;

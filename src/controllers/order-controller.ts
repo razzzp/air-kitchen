@@ -8,11 +8,11 @@ import { IsNull } from "typeorm";
 import { isValidId } from "../validators/joi/id-validator";
 
 export class OrderController {
-    protected static _getNewPostValidator() : IValidator {
+    protected static _getNewPostValidator() : IValidator<IOrder> {
         return new OrderPostValidator();
     }
 
-    protected static _getNewPutValidator() : IValidator {
+    protected static _getNewPutValidator() : IValidator<IOrder> {
         return new OrderPutValidator();
     }
 

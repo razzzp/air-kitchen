@@ -7,26 +7,26 @@ import { User } from "./user";
 @Entity()
 export class LocalCredentials extends RootEntity implements ILocalCredentials{
 
-    @ManyToOne(()=>User,{eager:true})
+    @ManyToOne(()=>User,{
+        eager:true,
+        nullable:false,
+    })
     public user: User;
 
     @Column({
         type: "varbinary",
-        length: 16
+        length: 16,
+        nullable:false,
     })
     public salt: Buffer;
 
     @Column({
         type: "varbinary",
-        length: 32
+        length: 32,
+        nullable:false,
     })
     public hash: Buffer;
 
-    @Column({
-        type: "datetime",
-        default: null
-    })
-    public expiryDate: Date;
 
     /**
      *
