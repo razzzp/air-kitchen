@@ -272,8 +272,9 @@ export class AuthenticationController {
      * @param refreshTokenCred 
      * @returns bearer credential object for user, with tokens encoded
      */
-    private static _buildViewForBearerCredentials(accessTokenCred: IAccessTokenCredential, refreshTokenCred: IRefreshTokenCredential) {
+    private static _buildViewForBearerCredentials(accessTokenCred: IAccessTokenCredential, refreshTokenCred: IRefreshTokenCredential, user: IUser) {
         return {
+            user: {displayName: user.displayName},
             tokenType: "bearer",
             accessToken: accessTokenCred.token.toString('base64'),
             expiryDate: accessTokenCred.expiryDate.getTime(),
@@ -292,7 +293,7 @@ export class AuthenticationController {
 
             const {accessTokenCred,refreshTokenCred} = await AuthenticationController._createBearerCredentialsForUser(user);
 
-            return res.json(AuthenticationController._buildViewForBearerCredentials(accessTokenCred,refreshTokenCred));
+            return res.json(AuthenticationController._buildViewForBearerCredentials(accessTokenCred,refreshTokenCred,user));
         } catch (error) {
             return next(`Something went wrong\n${error}`);
         }   
@@ -401,7 +402,7 @@ export class AuthenticationController {
         // if fed creds available, create and return token credentials
         const {accessTokenCred,refreshTokenCred} = await AuthenticationController._createBearerCredentialsForUser(user);
 
-        return res.json(AuthenticationController._buildViewForBearerCredentials(accessTokenCred,refreshTokenCred));
+        return res.json(AuthenticationController._buildViewForBearerCredentials(accessTokenCred,refreshTokenCred,user));
     }
     
     public static getBasicStrategy(){
