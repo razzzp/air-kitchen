@@ -325,11 +325,7 @@ export class AuthenticationController {
                 };
                 const savedAccTokenCreds = await accessTokenRepo.save(newAccTokenCreds);
                 
-                return res.json({
-                    user: savedAccTokenCreds.user.id,
-                    token: savedAccTokenCreds.token.toString('base64'),
-                    expiryDate: savedAccTokenCreds.expiryDate
-                });
+                return res.json(AuthenticationController._buildViewForBearerCredentials(savedAccTokenCreds, foundRefTokenCreds, foundRefTokenCreds.user));
             } else {
                 return res.status(401).send('Invalid token');
             }
