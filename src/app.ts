@@ -20,7 +20,7 @@ initializeDataSource()
 })
 .catch(reason => {
     console.error(`[error] Failed to database: ${reason}`);
-    process.exit();
+    process.exit(1);
 });
 
 // middle wares

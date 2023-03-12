@@ -17,7 +17,7 @@ export class OrderController {
     }
 
     protected static _priceToDisplay(priceString: bigint) {
-        return `$${BigInt(priceString) / BigInt(100)}.${(BigInt(priceString) % BigInt(100)).toString().padStart(2,'0')}`;
+        return `${priceString}`;
     }
 
     protected static _isInstanceOfIOrder(object: any) : object is IOrder {
@@ -150,10 +150,11 @@ export class OrderController {
             const newOrder = OrderController._buildOrderEntityFromData(validatedOrder);
             newOrder.creator = <IUser>req.user;
             const savedOrder = await orderRepo.save(newOrder);
-            return res.json(savedOrder);
+            return res.status(200).json(savedOrder);
         } else {
             // throw new Error('something went wrong :(');
             // throw new Error(validationResult.error.annotate());
+            res.status(400);
             return next(validationResult.error);
         } 
     }

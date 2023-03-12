@@ -11,7 +11,7 @@ export class OrderPartialValidator extends JoiValidator<IOrder>{
         super();
         this._joiValidator =  Joi.object().keys({
             name: Joi.string().max(255),
-            description: Joi.string().max(1000),
+            description: Joi.string().max(1000).allow(''),
             status: Joi.number().min(0).max(4),
             dueDate: Joi.date().iso(),
             salePrice: Joi.string().pattern(new RegExp("^(-|\\+)?[\\d]+$"))

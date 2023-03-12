@@ -1,7 +1,7 @@
 -- insert into `air-kitchen`.`test` (testField) values ('test value');
 
 -- INSERT INTO `air-kitchen`.`test` (id,creation_date,test_field) VALUES (NULL,1669816929167,'test Value');
--- select * from `air-kitchen`.`order`;
+select * from `air-kitchen`.`order`;
 select * from `air-kitchen`.`user`;
 -- select * from `air-kitchen`.`local_credentials`;
 use `air-kitchen`;
