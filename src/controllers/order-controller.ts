@@ -1,23 +1,30 @@
 import Express from "express";
 import { Order } from "../entities/typeorm-entities/order";
-import { getOrderRepository } from "../repositories/typeorm-repositories/repositories";
 import { IValidator } from "../validators/ivalidator";
 import { OrderPostValidator, OrderPutValidator } from "../validators/joi/order-validator";
 import { IOrder, EOrderStatus, IUser } from "../entities/interfaces";
 import { IsNull } from "typeorm";
 import { isValidId } from "../validators/joi/id-validator";
+import { IViewBuilder } from "../views/view-builder";
+import { IRepository } from "../repositories/interfaces";
 
 export class OrderController {
+    private _orderViewBuilder : IViewBuilder<IOrder>;
+    private _orderRepo : IRepository<IOrder>;
+    /**
+     *
+     */
+    constructor(orderViewBuilder : IViewBuilder<IOrder>, orderRepo : IRepository<IOrder>) {
+        this._orderViewBuilder = orderViewBuilder;
+        this._orderRepo = orderRepo;
+    }
+
     protected static _getNewPostValidator() : IValidator<IOrder> {
         return new OrderPostValidator();
     }
 
     protected static _getNewPutValidator() : IValidator<IOrder> {
         return new OrderPutValidator();
-    }
-
-    protected static _priceToDisplay(priceString: bigint) {
-        return `${priceString}`;
     }
 
     protected static _isInstanceOfIOrder(object: any) : object is IOrder {
@@ -33,19 +40,6 @@ export class OrderController {
         return new Order(data);
     }
 
-    protected static _getOrderForView(order: IOrder): Record<string, any> {
-        return {
-            id : order.id,
-            creationDate : order.creationDate.toString(),
-            name : order.name,
-            description : order.description,
-            status : order.status.toString(),
-            salePrice : (order.salePrice) ? OrderController._priceToDisplay(order.salePrice) : null,
-            dueDate : (order.dueDate) ? order.dueDate.toString() : null,
-            creator: (order.creator)
-        };
-    }
-
     /**
      * Middleware to retrieve order based on OrderID
      *  sets in in the req object
@@ -54,13 +48,13 @@ export class OrderController {
      * @param next 
      * @returns 
      */
-    public static async getOrder(req : Express.Request, res : Express.Response, next : Express.NextFunction) { 
+    public async getAndSetOrder(req : Express.Request, res : Express.Response, next : Express.NextFunction) { 
         // validate order id in uri
         const { orderId } = req.params;
         if (!isValidId(orderId)) return res.status(400).send('Invalid Order Id');
 
         // retrieve order from db
-        const orderRepo = getOrderRepository();
+        const orderRepo = this._orderRepo;
         // load creator field
         const retrievedOrder = await orderRepo.findOne({
             relations: {creator: true},
@@ -82,14 +76,13 @@ export class OrderController {
      * @param next 
      * @returns 
      */
-    public static async authorizeUserForOrder(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
+    public async authorizeUserForOrder(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
         if (!req.user) return res.status(401).send('Unauthorized');
         if (!req.orderEntity || !req.orderEntity.creator) return res.status(500).send('Something went wrong');
         const retrievedOrder = req.orderEntity;
 
         // if current user is not the creator, unauthorized
         if(req.user.id !== retrievedOrder.creator.id) return res.status(401).send('Unauthorized');
-
         next();
     }
 
@@ -101,8 +94,8 @@ export class OrderController {
      * @param res express response object
      * @param next express next function
      */
-    public static async retrieveOrders(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
-        const orderRepo = getOrderRepository();
+    public async retrieveOrders(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
+        const orderRepo = this._orderRepo;
         let queryOptions = null;
         // if user exist, search order for specific users only
         if (req.user && (<any>req.user).id) {
@@ -124,7 +117,7 @@ export class OrderController {
         const queryResults = await orderRepo.find(queryOptions);
         const viewResults = queryResults.map((curOrder)=> {
             if (!OrderController._isInstanceOfIOrder(curOrder)) return;
-            return OrderController._getOrderForView(curOrder);
+            return this._orderViewBuilder.buildView(curOrder);
         });
         return res.json(viewResults);
     }
@@ -135,7 +128,7 @@ export class OrderController {
      * @param res 
      * @param next 
      */
-    public static async createOrder(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
+    public async createOrder(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
         if(!req.user) return res.status(401).send('Unauthorized');
         // parse and validate body
         const requestBody = req.body;
@@ -146,7 +139,7 @@ export class OrderController {
         // const queryResults = orderRepo.save();
         if (!validationResult.error){
             const validatedOrder = <IOrder>(validationResult.value);
-            const orderRepo = getOrderRepository();
+            const orderRepo = this._orderRepo;
             const newOrder = OrderController._buildOrderEntityFromData(validatedOrder);
             newOrder.creator = <IUser>req.user;
             const savedOrder = await orderRepo.save(newOrder);
@@ -168,13 +161,13 @@ export class OrderController {
      * @param next 
      * @returns 
      */
-    public static async retrieveOrder(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+    public async retrieveOrder(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
         if (!req.user) return res.status(401).send('Unauthorized');
         if (!req.orderEntity) return res.status(500).send('Something went wrong');
    
         const retrievedOrder = req.orderEntity;
 
-        return res.json(OrderController._getOrderForView(retrievedOrder));
+        return res.json(this._orderViewBuilder.buildView(retrievedOrder));
     }
 
     /**
@@ -186,7 +179,7 @@ export class OrderController {
      * @param next 
      * @returns 
      */
-    public static async updateOrder(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+    public async updateOrder(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
         if (!req.user) return res.status(401).send('Unauthorized');
         if (!req.orderEntity) return res.status(500).send('Something went wrong');
 
@@ -202,7 +195,7 @@ export class OrderController {
         if (!validationResult.error){
             const validatedOrder = <IOrder>(validationResult.value);
             // save order
-            const orderRepo = getOrderRepository();
+            const orderRepo = this._orderRepo;
             const savedOrder = await orderRepo.save(validatedOrder);
             return res.json(savedOrder);
         } else {
@@ -221,12 +214,12 @@ export class OrderController {
      * @param next 
      * @returns 
      */
-    public static async deleteOrder(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
+    public async deleteOrder(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
         if (!req.user) return res.status(401).send('Unauthorized');
         if (!req.orderEntity) return res.status(500).send('Something went wrong');
 
         const retrievedOrder = req.orderEntity;
-        const orderRepo = getOrderRepository();
+        const orderRepo = this._orderRepo;
         const result = await orderRepo.delete({id: retrievedOrder.id});
         return res.send(result);
     }

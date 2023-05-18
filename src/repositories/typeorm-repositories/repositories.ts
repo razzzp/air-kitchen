@@ -3,7 +3,7 @@ import { LocalCredentials } from "../../entities/typeorm-entities/local-credenti
 import { Order } from "../../entities/typeorm-entities/order";
 import { User } from "../../entities/typeorm-entities/user";
 import { IRepository } from "../interfaces";
-import getMySQLDataSource from "../../data-sources/typeorm-datasource";
+import getMySQLDataSource, { initializeDataSource } from "../../data-sources/typeorm-datasource";
 import { TypeORMRepository } from "./typeorm-repository";
 import { AccessTokenCredentials } from "../../entities/typeorm-entities/access-token-credentials";
 import { RefreshTokenCredentials } from "../../entities/typeorm-entities/refresh-token-credentials";
@@ -15,7 +15,7 @@ export function getLocalCredentialsRepository() : TypeORMRepository<LocalCredent
     return new TypeORMRepository(dataSource, LocalCredentials);
 }
 
-export function getOrderRepository() : IRepository<IOrder> {
+export function buildOrderRepository() : IRepository<IOrder> {
     const dataSource = getMySQLDataSource();
     return new TypeORMRepository(dataSource, Order);
 }
