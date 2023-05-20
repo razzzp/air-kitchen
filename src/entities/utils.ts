@@ -18,7 +18,7 @@ export class OrderStatusUtil {
         }
     }
 
-    public parse(str : string) : EOrderStatus | undefined {
+    public static parse(str : string) : EOrderStatus | undefined {
         switch(str) {
             case 'Done':
                 return EOrderStatus.Done;

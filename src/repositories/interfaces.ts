@@ -1,4 +1,4 @@
-import { IEntity, IOrder } from "../entities/interfaces";
+import { IEntity, IOrderEntity } from "../entities/interfaces";
 
 export interface IRepository<T extends IEntity> {
     doesTableExist() : Promise<boolean>;
@@ -16,9 +16,9 @@ export interface IRepository<T extends IEntity> {
 }
 
 /** @deprecated */
-export interface IOrderRepository extends IRepository<IOrder>{
+export interface IOrderRepository extends IRepository<IOrderEntity>{
     /** @override */
-    save(entity : IOrder) : Promise<IOrder>;
+    save(entity : IOrderEntity) : Promise<IOrderEntity>;
     /** @override */
-    find() : Promise<Array<IOrder>>;
+    find() : Promise<Array<IOrderEntity>>;
 }

@@ -1,5 +1,5 @@
 import { DataSource, Repository } from "typeorm";
-import { IOrder } from "../../entities/interfaces";
+import { IOrderEntity } from "../../entities/interfaces";
 import { Order } from "../../entities/typeorm-entities/order";
 import { IOrderRepository } from "../interfaces";
 
@@ -22,7 +22,7 @@ export class OrderRepository implements IOrderRepository {
         this._dataSource = dataSource;
         this._repo = dataSource.getRepository(Order);
     }
-    findBy(options?: any): Promise<IOrder[]> {
+    findBy(options?: any): Promise<IOrderEntity[]> {
         throw new Error("Method not implemented.");
     }
     delete(options?: any): Promise<any> {
@@ -31,10 +31,10 @@ export class OrderRepository implements IOrderRepository {
     update(criteria: any, partialEntity: any): Promise<any> {
         throw new Error("Method not implemented.");
     }
-    findOne(options?: any): Promise<IOrder> {
+    findOne(options?: any): Promise<IOrderEntity> {
         throw new Error("Method not implemented.");
     }
-    findOneBy(options?: any): Promise<IOrder> {
+    findOneBy(options?: any): Promise<IOrderEntity> {
         throw new Error("Method not implemented.");
     }
 
@@ -43,7 +43,7 @@ export class OrderRepository implements IOrderRepository {
         throw new Error("Method not implemented.");
     }
 
-    async save(entity: IOrder): Promise<IOrder> {
+    async save(entity: IOrderEntity): Promise<IOrderEntity> {
         return await this.repo.save(entity);
     }
     

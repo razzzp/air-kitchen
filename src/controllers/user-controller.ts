@@ -1,5 +1,5 @@
 import { getUserRepository } from "../repositories/typeorm-repositories/repositories";
-import { IValidator } from "../validators/ivalidator";
+import { IValidator } from "../validators/interfaces";
 import { UserValidator } from "../validators/joi/user-validator";
 import Express from "express";
 import { User } from "../entities/typeorm-entities/user";

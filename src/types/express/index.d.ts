@@ -1,4 +1,4 @@
-import { IOrder, IUser } from "../../entities/interfaces";
+import { IOrderEntity, IUser } from "../../entities/interfaces";
 
 
 // extends Express types 
@@ -11,7 +11,7 @@ declare global {
         
         export interface Request {
             // Request object may have orderEntity assigned to it
-            orderEntity?: IOrder
+            orderEntity?: IOrderEntity
         }
     }
 }

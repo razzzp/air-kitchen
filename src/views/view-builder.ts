@@ -1,4 +1,4 @@
-import { IOrder } from "../entities/interfaces";
+import { IOrderEntity } from "../entities/interfaces";
 import { OrderStatusUtil } from "../entities/utils";
 
 export interface IViewBuilder<E> {
@@ -9,8 +9,8 @@ function _priceForDisplay(priceString: bigint) {
     return `${priceString}`;
 }
 
-export class OrderViewBuilder implements IViewBuilder<IOrder> {
-    buildView(entity: IOrder): Record<string, any> {
+export class OrderViewBuilder implements IViewBuilder<IOrderEntity> {
+    buildView(entity: IOrderEntity): Record<string, any> {
         return {
             id : entity.id,
             creationDate : entity.creationDate.toString(),

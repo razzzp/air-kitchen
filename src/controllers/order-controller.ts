@@ -1,20 +1,21 @@
 import Express from "express";
 import { Order } from "../entities/typeorm-entities/order";
-import { IValidator } from "../validators/ivalidator";
+import { IOrder, IValidator } from "../validators/interfaces";
 import { OrderPostValidator, OrderPutValidator } from "../validators/joi/order-validator";
-import { IOrder, EOrderStatus, IUser } from "../entities/interfaces";
+import { IOrderEntity, EOrderStatus, IUser } from "../entities/interfaces";
 import { IsNull } from "typeorm";
 import { isValidId } from "../validators/joi/id-validator";
 import { IViewBuilder } from "../views/view-builder";
 import { IRepository } from "../repositories/interfaces";
+import { OrderStatusUtil } from "../entities/utils";
 
 export class OrderController {
-    private _orderViewBuilder : IViewBuilder<IOrder>;
-    private _orderRepo : IRepository<IOrder>;
+    private _orderViewBuilder : IViewBuilder<IOrderEntity>;
+    private _orderRepo : IRepository<IOrderEntity>;
     /**
      *
      */
-    constructor(orderViewBuilder : IViewBuilder<IOrder>, orderRepo : IRepository<IOrder>) {
+    constructor(orderViewBuilder : IViewBuilder<IOrderEntity>, orderRepo : IRepository<IOrderEntity>) {
         this._orderViewBuilder = orderViewBuilder;
         this._orderRepo = orderRepo;
     }
@@ -27,7 +28,7 @@ export class OrderController {
         return new OrderPutValidator();
     }
 
-    protected static _isInstanceOfIOrder(object: any) : object is IOrder {
+    protected static _isInstanceOfIOrder(object: any) : object is IOrderEntity {
         let result ='name' in object ;
         result  &&= 'description' in object;
         result  &&= 'status' in object && object.status in EOrderStatus;
@@ -36,8 +37,16 @@ export class OrderController {
         return result;
     }
 
-    protected static _buildOrderEntityFromData(data: IOrder) : IOrder {
-        return new Order(data);
+    protected static _buildOrderEntityFromOrderData(data: IOrder) : IOrderEntity {
+        const result = new Order();
+        
+        result.id = data.id? data.id :undefined;
+        result.name= data.name;
+        result.description= data.description;
+        result.status= OrderStatusUtil.parse(data.status);
+        result.dueDate= data.dueDate;
+        result.salePrice= data.salePrice;
+        return result;
     }
 
     /**
@@ -140,7 +149,7 @@ export class OrderController {
         if (!validationResult.error){
             const validatedOrder = <IOrder>(validationResult.value);
             const orderRepo = this._orderRepo;
-            const newOrder = OrderController._buildOrderEntityFromData(validatedOrder);
+            const newOrder = OrderController._buildOrderEntityFromOrderData(validatedOrder);
             newOrder.creator = <IUser>req.user;
             const savedOrder = await orderRepo.save(newOrder);
             return res.status(200).json(savedOrder);
@@ -194,9 +203,11 @@ export class OrderController {
         // const queryResults = orderRepo.save();
         if (!validationResult.error){
             const validatedOrder = <IOrder>(validationResult.value);
+            const updatedOrder = OrderController._buildOrderEntityFromOrderData(validatedOrder);
             // save order
             const orderRepo = this._orderRepo;
-            const savedOrder = await orderRepo.save(validatedOrder);
+            
+            const savedOrder = await orderRepo.save(updatedOrder);
             return res.json(savedOrder);
         } else {
             // throw new Error('something went wrong :(');

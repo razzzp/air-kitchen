@@ -1,4 +1,4 @@
-import { IOrder } from "../../entities/interfaces";
+import { IOrderEntity } from "../../entities/interfaces";
 import { LocalCredentials } from "../../entities/typeorm-entities/local-credentials";
 import { Order } from "../../entities/typeorm-entities/order";
 import { User } from "../../entities/typeorm-entities/user";
@@ -15,7 +15,7 @@ export function getLocalCredentialsRepository() : TypeORMRepository<LocalCredent
     return new TypeORMRepository(dataSource, LocalCredentials);
 }
 
-export function buildOrderRepository() : IRepository<IOrder> {
+export function buildOrderRepository() : IRepository<IOrderEntity> {
     const dataSource = getMySQLDataSource();
     return new TypeORMRepository(dataSource, Order);
 }

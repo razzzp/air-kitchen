@@ -1,18 +1,18 @@
 
 import { Column, Entity, ManyToOne } from "typeorm";
-import { EOrderStatus, IOrder } from "../interfaces";
+import { EOrderStatus, IOrderEntity } from "../interfaces";
 import { RootEntity } from "./root-entity";
 import { User } from "./user";
 
 
 
 @Entity()
-export class Order extends RootEntity implements IOrder{
+export class Order extends RootEntity implements IOrderEntity{
 
     /**
      *  initialization constructor, assumes the data is safe
      */
-    constructor(data?: IOrder) {
+    constructor(data?: IOrderEntity) {
         super();
         if (!data) return;
 

@@ -17,7 +17,7 @@ export enum EUserStatus {
     Inactive = 1,
 }
 
-export interface IOrder extends IEntity {
+export interface IOrderEntity extends IEntity {
     name: string;
     description: string;
     status: EOrderStatus;

@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { IEntity } from "../../entities/interfaces";
-import { IValidator, TValidationResult } from "../ivalidator";
+import { IValidator, TValidationResult } from "../interfaces";
 
 export abstract class JoiValidator<T extends IEntity> implements IValidator<T>{
     protected _joiValidator: Joi.Schema;

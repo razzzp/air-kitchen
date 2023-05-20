@@ -17,7 +17,7 @@ import { Strategy as BearerStrategy } from "passport-http-bearer";
 import { MoreThan } from "typeorm";
 import { IRepository } from "../repositories/interfaces";
 import dotenv from 'dotenv';
-import { TValidationResult } from "../validators/ivalidator";
+import { TValidationResult } from "../validators/interfaces";
 import { userInfo } from "os";
 
 
