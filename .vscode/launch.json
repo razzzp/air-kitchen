@@ -11,7 +11,8 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "command": "npm start",
-        }
+            "preLaunchTask": "npm: prestart",
+            "command": "npm run start",
+        },
     ]
 }

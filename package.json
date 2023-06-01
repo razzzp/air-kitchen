@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "build": "npx tsc",
     "prestart": "npx tsc",
     "start": "node dist/app.js",
     "test": "jest"
