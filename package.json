@@ -33,7 +33,6 @@
     "@types/express-session": "^1.17.5",
     "@types/http-errors": "^2.0.1",
     "@types/jest": "^29.4.0",
-    "@types/joi": "^17.2.3",
     "@types/mysql": "^2.15.21",
     "@types/node": "^18.11.11",
     "@types/passport": "^1.0.11",
