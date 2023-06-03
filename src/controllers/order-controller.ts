@@ -126,7 +126,7 @@ export class OrderController {
                 //  if we query using number, it will assume the index of the enum, 1='0', 2='1'...
                 //   why is this not documented in typeorm...?
                 //  so convert to string instead, seems to work :|
-                status: orderPartial.status ?  `${orderPartial.status}` : undefined,
+                status: (typeof orderPartial.status === 'number') ?  `${orderPartial.status}` : undefined,
                 name: orderPartial.name ? Like(`%${orderPartial.name}%`) : undefined,
                 creator:{id: user.id},
             }
