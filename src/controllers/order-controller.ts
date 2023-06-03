@@ -1,13 +1,14 @@
-import Express from "express";
+import Express, { query } from "express";
 import { Order } from "../entities/typeorm-entities/order";
 import { IOrder, IValidator } from "../validators/interfaces";
-import { OrderPostValidator, OrderPutValidator } from "../validators/joi/order-validator";
+import { OrderPartialValidator, OrderPostValidator, OrderPutValidator } from "../validators/joi/order-validator";
 import { IOrderEntity, EOrderStatus, IUser } from "../entities/interfaces";
-import { IsNull } from "typeorm";
+import { IsNull, Like } from "typeorm";
 import { isValidId } from "../validators/joi/id-validator";
 import { IViewBuilder } from "../views/view-builder";
 import { IRepository } from "../repositories/interfaces";
 import { OrderStatusUtil } from "../entities/utils";
+import { any } from "joi";
 
 export class OrderController {
     private _orderViewBuilder : IViewBuilder<IOrderEntity>;
@@ -95,6 +96,45 @@ export class OrderController {
         next();
     }
 
+    private _parseEntityPartial(dict : {[key:string]: unknown}) : Partial<IOrderEntity> | undefined {
+        // TODO: implemt rest of fields
+        // TODO: move to utils?
+        if(!dict) return undefined;
+        const result : Partial<IOrderEntity>= {};
+        if(dict.id && typeof dict.id === 'string') result.id = Number.parseInt(dict.id);
+        if(dict.name && typeof dict.name === 'string') result.name = dict.name;
+        if(dict.status && typeof dict.status === 'string') result.status = OrderStatusUtil.parse(dict.status);
+        return result;
+    }
+
+    private _buildQueryOptions(query: {[key :string] : unknown}, user: IUser) : any{
+        // TODO: implement other fields
+        const orderPartial = this._parseEntityPartial(query);
+        if (!orderPartial) return undefined;
+
+
+        let queryOptions = null;
+        // if user exist, search order for specific users only
+        queryOptions = {
+            relations: {
+                creator: true
+            },
+            where:{
+                id: orderPartial.id,
+                // dunno why i need to do this...
+                //  mysql table is enum('0','1',...)
+                //  if we query using number, it will assume the index of the enum, 1='0', 2='1'...
+                //   why is this not documented in typeorm...?
+                //  so convert to string instead, seems to work :|
+                status: orderPartial.status ?  `${orderPartial.status}` : undefined,
+                name: orderPartial.name ? Like(`%${orderPartial.name}%`) : undefined,
+                creator:{id: user.id},
+            }
+        };
+
+        return queryOptions;
+    }
+
     /**
      * Retrieves all orders
      * If user is logged in returns orders with them as the creator
@@ -104,25 +144,14 @@ export class OrderController {
      * @param next express next function
      */
     public async retrieveOrders(req : Express.Request, res : Express.Response, next : Express.NextFunction) {
+        if(!req.user) return res.status(401).send('Unauthorized');
         const orderRepo = this._orderRepo;
-        let queryOptions = null;
+
+        const validationResult = new OrderPartialValidator().validate(req.query);
+        if (validationResult.error) return res.status(400).send(`Bad request. ${validationResult.error}`);
         // if user exist, search order for specific users only
-        if (req.user && (<any>req.user).id) {
-            queryOptions = {
-                relations: {
-                    creator: true
-                },
-                where:{
-                    creator:{id: (<any>req.user).id}
-                }
-            };
-        } else {
-            queryOptions = {
-                where:{
-                    creator: IsNull()
-                }
-            };
-        }
+        const queryOptions = this._buildQueryOptions(req.query, req.user);
+
         const queryResults = await orderRepo.find(queryOptions);
         const viewResults = queryResults.map((curOrder)=> {
             if (!OrderController._isInstanceOfIOrder(curOrder)) return;

@@ -27,7 +27,7 @@ function buildMySQLDataSource() : DataSource {
         password: process.env.DB_PASS,
         database: process.env.DB_DB,
         synchronize: true,
-        logging: false,
+        // logging: true,
         entities: [Order, User, LocalCredentials, AccessTokenCredentials, RefreshTokenCredentials, FederatedCredentials],
         subscribers: [],
         migrations: [],

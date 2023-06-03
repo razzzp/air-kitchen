@@ -40,7 +40,7 @@ export class Order extends RootEntity implements IOrderEntity{
     @Column({
         type : "enum",
         enum : EOrderStatus,
-        default : EOrderStatus.Pending
+        default : EOrderStatus.Pending,
     })
     public status : EOrderStatus;
 

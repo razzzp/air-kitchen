@@ -1,7 +1,7 @@
 
 import Joi from "joi";
 
-export const getIdValidator = () => Joi.number().positive().integer().required();
+export const getIdValidator = () => Joi.number().positive().integer();
 
 export const isValidId = (id: any) : id is number => {
     if (!id) return false;
